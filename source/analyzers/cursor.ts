@@ -47,39 +47,22 @@ export class CursorAnalyzer {
 
 	private async scanSourceFiles(): Promise<SourceFile[]> {
 		const files: SourceFile[] = [];
-		const extensions = [
-			'.ts',
-			'.tsx',
-			'.js',
-			'.jsx',
-			'.py',
-			'.java',
-			'.go',
-			'.rs',
-		];
+		const extensions = ['.ts', '.tsx', '.js', '.jsx', '.py', '.java', '.go', '.rs'];
 
 		const scanDir = (dir: string) => {
 			try {
-				const entries = fs.readdirSync(dir, {withFileTypes: true});
+				const entries = fs.readdirSync(dir, { withFileTypes: true });
 				for (const entry of entries) {
 					const fullPath = path.join(dir, entry.name);
 					if (entry.isDirectory()) {
 						if (
-							![
-								'node_modules',
-								'.git',
-								'dist',
-								'build',
-								'target',
-								'.cursor',
-								'.vscode',
-							].includes(entry.name)
+							!['node_modules', '.git', 'dist', 'build', 'target', '.cursor', '.vscode'].includes(
+								entry.name
+							)
 						) {
 							scanDir(fullPath);
 						}
-					} else if (
-						extensions.some((extension) => entry.name.endsWith(extension))
-					) {
+					} else if (extensions.some((extension) => entry.name.endsWith(extension))) {
 						const relPath = path.relative(this.projectPath, fullPath);
 						const content = fs.readFileSync(fullPath, 'utf8');
 						const lines = content.split('\n').length;
@@ -139,16 +122,10 @@ export class CursorAnalyzer {
 		return langMap[extension] || 'Unknown';
 	}
 
-	private detectFramework(
-		filename: string,
-		content: string,
-	): string | undefined {
-		if (content.includes("from 'react'") || content.includes('from "react"'))
-			return 'React';
-		if (content.includes("from 'next'") || content.includes('from "next"'))
-			return 'Next.js';
-		if (content.includes("from 'vue'") || content.includes('from "vue"'))
-			return 'Vue';
+	private detectFramework(filename: string, content: string): string | undefined {
+		if (content.includes("from 'react'") || content.includes('from "react"')) return 'React';
+		if (content.includes("from 'next'") || content.includes('from "next"')) return 'Next.js';
+		if (content.includes("from 'vue'") || content.includes('from "vue"')) return 'Vue';
 		if (content.includes('def __init__')) return 'Django/Flask';
 		if (content.includes('func main')) return 'Go';
 		return undefined;
@@ -205,16 +182,12 @@ export class CursorAnalyzer {
 		const packageJsonPath = path.join(this.projectPath, 'package.json');
 		if (fs.existsSync(packageJsonPath)) {
 			const package_ = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-			for (const [name, version] of Object.entries(
-				package_.dependencies || {},
-			)) {
-				deps.push({name, version: String(version), type: 'production'});
+			for (const [name, version] of Object.entries(package_.dependencies || {})) {
+				deps.push({ name, version: String(version), type: 'production' });
 			}
 
-			for (const [name, version] of Object.entries(
-				package_.devDependencies || {},
-			)) {
-				deps.push({name, version: String(version), type: 'development'});
+			for (const [name, version] of Object.entries(package_.devDependencies || {})) {
+				deps.push({ name, version: String(version), type: 'development' });
 			}
 		}
 
@@ -223,17 +196,11 @@ export class CursorAnalyzer {
 
 	private async detectEnvironment(): Promise<EnvironmentInfo> {
 		const platform =
-			process.platform === 'win32'
-				? 'windows'
-				: process.platform === 'darwin'
-					? 'mac'
-					: 'linux';
+			process.platform === 'win32' ? 'windows' : process.platform === 'darwin' ? 'mac' : 'linux';
 
 		let packageManager: 'npm' | 'yarn' | 'pnpm' = 'npm';
-		if (fs.existsSync(path.join(this.projectPath, 'pnpm-lock.yaml')))
-			packageManager = 'pnpm';
-		else if (fs.existsSync(path.join(this.projectPath, 'yarn.lock')))
-			packageManager = 'yarn';
+		if (fs.existsSync(path.join(this.projectPath, 'pnpm-lock.yaml'))) packageManager = 'pnpm';
+		else if (fs.existsSync(path.join(this.projectPath, 'yarn.lock'))) packageManager = 'yarn';
 
 		return {
 			platform,
@@ -258,9 +225,7 @@ export class CursorAnalyzer {
 					.slice(0, 20);
 				for (const file of files) {
 					try {
-						const content = JSON.parse(
-							fs.readFileSync(path.join(sessionsDir, file), 'utf8'),
-						);
+						const content = JSON.parse(fs.readFileSync(path.join(sessionsDir, file), 'utf8'));
 						conversations.push({
 							id: file.replace('.json', ''),
 							timestamp: content.timestamp || new Date().toISOString(),
@@ -271,7 +236,7 @@ export class CursorAnalyzer {
 			} catch {}
 		}
 
-		return {conversations, tools: this.extractToolUsage(conversations)};
+		return { conversations, tools: this.extractToolUsage(conversations) };
 	}
 
 	private getCursorDir(): string | undefined {
@@ -286,9 +251,9 @@ export class CursorAnalyzer {
 	}
 
 	private extractToolUsage(
-		conversations: Conversation[],
-	): Array<{name: string; count: number; lastUsed: string}> {
-		const tools = new Map<string, {count: number; lastUsed: string}>();
+		conversations: Conversation[]
+	): Array<{ name: string; count: number; lastUsed: string }> {
+		const tools = new Map<string, { count: number; lastUsed: string }>();
 
 		for (const conv of conversations) {
 			for (const message of conv.messages) {
@@ -316,9 +281,7 @@ export class CursorAnalyzer {
 	private generateRecommendations(context: ProjectContext): string[] {
 		const recs: string[] = [];
 
-		const hasCursorRules = context.configFiles.some(
-			(c) => c.path === '.cursorrules',
-		);
+		const hasCursorRules = context.configFiles.some((c) => c.path === '.cursorrules');
 		if (hasCursorRules) {
 			recs.push('Cursor rules file detected - will preserve custom rules');
 		}
@@ -327,9 +290,7 @@ export class CursorAnalyzer {
 	}
 }
 
-export async function analyzeWithCursor(
-	projectPath: string,
-): Promise<AnalyzerResult> {
+export async function analyzeWithCursor(projectPath: string): Promise<AnalyzerResult> {
 	const analyzer = new CursorAnalyzer(projectPath);
 	return analyzer.analyze();
 }

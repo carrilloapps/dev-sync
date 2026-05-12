@@ -24,16 +24,16 @@ export const ALL_SOURCES: Array<{
 		platform: 'all',
 		sessionPath: 'sessions',
 	},
-	{id: 'cursor', name: 'Cursor', platform: 'all', sessionPath: 'sessions'},
+	{ id: 'cursor', name: 'Cursor', platform: 'all', sessionPath: 'sessions' },
 	{
 		id: 'windsurf',
 		name: 'WindSurf',
 		platform: 'all',
 		sessionPath: 'sessions',
 	},
-	{id: 'trae', name: 'Trae', platform: 'all', sessionPath: 'sessions'},
-	{id: 'codepal', name: 'CodePal', platform: 'all', sessionPath: 'sessions'},
-	{id: 'aider', name: 'Aider', platform: 'all', sessionPath: '.aider'},
+	{ id: 'trae', name: 'Trae', platform: 'all', sessionPath: 'sessions' },
+	{ id: 'codepal', name: 'CodePal', platform: 'all', sessionPath: 'sessions' },
+	{ id: 'aider', name: 'Aider', platform: 'all', sessionPath: '.aider' },
 	{
 		id: 'continue',
 		name: 'Continue',
@@ -52,7 +52,7 @@ export const ALL_SOURCES: Array<{
 		platform: 'all',
 		sessionPath: '.replit',
 	},
-	{id: 'devin', name: 'Devin', platform: 'all', sessionPath: 'sessions'},
+	{ id: 'devin', name: 'Devin', platform: 'all', sessionPath: 'sessions' },
 ];
 
 export const ALL_TARGETS: Array<{
@@ -121,7 +121,7 @@ export const ALL_TARGETS: Array<{
 		configDir: '.lapce',
 		configFile: 'workspace.json',
 	},
-	{id: 'zed', name: 'Zed', configDir: '.zed', configFile: 'workspace.json'},
+	{ id: 'zed', name: 'Zed', configDir: '.zed', configFile: 'workspace.json' },
 	{
 		id: 'onivim',
 		name: 'Onivim',
@@ -163,10 +163,7 @@ export type ProjectSyncState = {
 	conversationsCount: number;
 };
 
-export function getAgentDir(
-	agentId: string,
-	projectPath?: string,
-): string | undefined {
+export function getAgentDir(agentId: string, projectPath?: string): string | undefined {
 	const home = process.env.HOME || process.env.USERPROFILE || '';
 	const directories: Record<string, string> = {
 		'claude-code':
@@ -185,13 +182,7 @@ export function getAgentDir(
 			process.platform === 'win32'
 				? path.join(process.env.LOCALAPPDATA || '', 'Google', 'Gemini')
 				: process.platform === 'darwin'
-					? path.join(
-							home,
-							'Library',
-							'Application Support',
-							'Google',
-							'Gemini',
-						)
+					? path.join(home, 'Library', 'Application Support', 'Google', 'Gemini')
 					: path.join(home, '.config', 'google-gemini'),
 		cursor:
 			process.platform === 'win32'
@@ -224,10 +215,7 @@ export function getAgentDir(
 	return path.join(baseDir, 'sessions');
 }
 
-export function getTargetDir(
-	targetId: string,
-	projectPath: string,
-): string | undefined {
+export function getTargetDir(targetId: string, projectPath: string): string | undefined {
 	const directories: Record<string, string> = {
 		opencode: '.opencode',
 		vscode: '.vscode',

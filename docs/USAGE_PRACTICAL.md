@@ -17,9 +17,9 @@ Este es el caso de uso principal de Agent Sync. Cuando estás trabajando con Cla
                                   │
                                   ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│                        AGENT-SYNC SAVE                             │
+│                        AI-SYNC SAVE                             │
 │                                                                     │
-│  agent-sync --from=claude-code --to=opencode --path=./mi-proyecto   │
+│  ai-sync --from=claude-code --to=opencode --path=./mi-proyecto   │
 └─────────────────────────────────────────────────────────────────────┘
                                   │
                                   ▼
@@ -36,11 +36,11 @@ Este es el caso de uso principal de Agent Sync. Cuando estás trabajando con Cla
 #### 1. Guardar desde Claude Code
 
 ```bash
-# Instalar agent-sync si no lo has hecho
-npm install -g agent-sync
+# Instalar ai-sync si no lo has hecho
+npm install -g ai-sync
 
 # Sincronizar el proyecto con conversaciones
-agent-sync --from=claude-code --to=opencode --path=./mi-proyecto
+ai-sync --from=claude-code --to=opencode --path=./mi-proyecto
 ```
 
 Esto crea en tu proyecto:
@@ -82,11 +82,11 @@ En cualquier IDE con MCP configurado:
 
 ```bash
 # Listar conversaciones disponibles
-npx agent-sync-mcp
+npx ai-sync-mcp
 # Luego usar tool: list_conversations
 
 # Ver una conversación específica
-npx agent-sync-mcp
+npx ai-sync-mcp
 # Luego usar tool: export_conversation
 ```
 
@@ -94,7 +94,7 @@ npx agent-sync-mcp
 
 ```bash
 # 1. Desde Claude Code, guardas tu sesión
-$ agent-sync --from=claude-code --to=opencode --path=./mi-proyecto
+$ ai-sync --from=claude-code --to=opencode --path=./mi-proyecto
 ✔ Analyzing project...
 ✔ Found 42 files
 ✔ Extracting conversations...
@@ -149,13 +149,13 @@ Agent Sync también permite migrar entre agentes de AI:
 
 ```bash
 # De Claude Code a Copilot
-agent-sync --from=claude-code --to=copilot --path=./mi-proyecto
+ai-sync --from=claude-code --to=copilot --path=./mi-proyecto
 
 # De Gemini a WindSurf
-agent-sync --from=gemini --to=windsurf --path=./mi-proyecto
+ai-sync --from=gemini --to=windsurf --path=./mi-proyecto
 
 # De Cursor a Claude Code (¡sí, funciona en ambas direcciones!)
-agent-sync --from=cursor --to=claude-code --path=./mi-proyecto
+ai-sync --from=cursor --to=claude-code --path=./mi-proyecto
 ```
 
 ### Watch Mode (Sincronización Automática)
@@ -164,7 +164,7 @@ Para proyectos en progreso:
 
 ```bash
 # Mantén sincronizado automáticamente
-agent-sync --from=claude-code --to=opencode --path=./mi-proyecto --watch
+ai-sync --from=claude-code --to=opencode --path=./mi-proyecto --watch
 ```
 
 Cada cambio que hagas se sincroniza automáticamente.
@@ -209,12 +209,12 @@ Cada cambio que hagas se sincroniza automáticamente.
 - El path debe coincidir con el proyecto que estabas usando
 
 #### "Permission denied"
-- En Linux/macOS: `sudo npm install -g agent-sync`
+- En Linux/macOS: `sudo npm install -g ai-sync`
 - O usa un Node.js version manager
 
 #### MCP no responde
 ```bash
 # Reinicia el servidor
-pkill -f agent-sync-mcp
-npx agent-sync-mcp
+pkill -f ai-sync-mcp
+npx ai-sync-mcp
 ```

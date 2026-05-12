@@ -47,38 +47,20 @@ export class CopilotAnalyzer {
 
 	private async scanSourceFiles(): Promise<SourceFile[]> {
 		const files: SourceFile[] = [];
-		const extensions = [
-			'.ts',
-			'.tsx',
-			'.js',
-			'.jsx',
-			'.py',
-			'.java',
-			'.cs',
-			'.go',
-		];
+		const extensions = ['.ts', '.tsx', '.js', '.jsx', '.py', '.java', '.cs', '.go'];
 
 		const scanDir = (dir: string) => {
 			try {
-				const entries = fs.readdirSync(dir, {withFileTypes: true});
+				const entries = fs.readdirSync(dir, { withFileTypes: true });
 				for (const entry of entries) {
 					const fullPath = path.join(dir, entry.name);
 					if (entry.isDirectory()) {
 						if (
-							![
-								'node_modules',
-								'.git',
-								'dist',
-								'build',
-								'target',
-								'.vscode',
-							].includes(entry.name)
+							!['node_modules', '.git', 'dist', 'build', 'target', '.vscode'].includes(entry.name)
 						) {
 							scanDir(fullPath);
 						}
-					} else if (
-						extensions.some((extension) => entry.name.endsWith(extension))
-					) {
+					} else if (extensions.some((extension) => entry.name.endsWith(extension))) {
 						const relPath = path.relative(this.projectPath, fullPath);
 						const content = fs.readFileSync(fullPath, 'utf8');
 						const lines = content.split('\n').length;
@@ -155,23 +137,14 @@ export class CopilotAnalyzer {
 		return langMap[extension] || 'Unknown';
 	}
 
-	private detectFramework(
-		filename: string,
-		content: string,
-	): string | undefined {
-		if (content.includes('@Injectable') || content.includes('NgModule'))
-			return 'Angular';
-		if (content.includes('@Component') || content.includes('@Directive'))
-			return 'Angular';
-		if (content.includes("from 'react'") || content.includes('from "react"'))
-			return 'React';
-		if (content.includes("from 'next'") || content.includes('from "next"'))
-			return 'Next.js';
-		if (content.includes("from 'vue'") || content.includes('from "vue"'))
-			return 'Vue';
+	private detectFramework(filename: string, content: string): string | undefined {
+		if (content.includes('@Injectable') || content.includes('NgModule')) return 'Angular';
+		if (content.includes('@Component') || content.includes('@Directive')) return 'Angular';
+		if (content.includes("from 'react'") || content.includes('from "react"')) return 'React';
+		if (content.includes("from 'next'") || content.includes('from "next"')) return 'Next.js';
+		if (content.includes("from 'vue'") || content.includes('from "vue"')) return 'Vue';
 		if (content.includes('def ') && content.includes(':')) return 'Python';
-		if (content.includes('namespace ') && content.includes('class '))
-			return '.NET';
+		if (content.includes('namespace ') && content.includes('class ')) return '.NET';
 		return undefined;
 	}
 
@@ -213,7 +186,7 @@ export class CopilotAnalyzer {
 					configFiles.push({
 						path: configName,
 						type: 'other',
-						content: {raw: content.slice(0, 500)},
+						content: { raw: content.slice(0, 500) },
 					});
 				}
 			}
@@ -232,8 +205,7 @@ export class CopilotAnalyzer {
 		if (filename.includes('webpack')) return 'webpack';
 		if (filename.includes('vite')) return 'vite';
 		if (filename.includes('next')) return 'next';
-		if (filename.includes('requirements') || filename.includes('Pipfile'))
-			return 'other';
+		if (filename.includes('requirements') || filename.includes('Pipfile')) return 'other';
 		return 'other';
 	}
 
@@ -243,16 +215,12 @@ export class CopilotAnalyzer {
 		const packageJsonPath = path.join(this.projectPath, 'package.json');
 		if (fs.existsSync(packageJsonPath)) {
 			const package_ = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-			for (const [name, version] of Object.entries(
-				package_.dependencies || {},
-			)) {
-				deps.push({name, version: String(version), type: 'production'});
+			for (const [name, version] of Object.entries(package_.dependencies || {})) {
+				deps.push({ name, version: String(version), type: 'production' });
 			}
 
-			for (const [name, version] of Object.entries(
-				package_.devDependencies || {},
-			)) {
-				deps.push({name, version: String(version), type: 'development'});
+			for (const [name, version] of Object.entries(package_.devDependencies || {})) {
+				deps.push({ name, version: String(version), type: 'development' });
 			}
 		}
 
@@ -262,7 +230,7 @@ export class CopilotAnalyzer {
 			for (const line of content.split('\n')) {
 				const match = /^([\w-]+)([=<>!]+)(.+)$/.exec(line);
 				if (match) {
-					deps.push({name: match[1], version: match[3], type: 'production'});
+					deps.push({ name: match[1], version: match[3], type: 'production' });
 				}
 			}
 		}
@@ -272,17 +240,11 @@ export class CopilotAnalyzer {
 
 	private async detectEnvironment(): Promise<EnvironmentInfo> {
 		const platform =
-			process.platform === 'win32'
-				? 'windows'
-				: process.platform === 'darwin'
-					? 'mac'
-					: 'linux';
+			process.platform === 'win32' ? 'windows' : process.platform === 'darwin' ? 'mac' : 'linux';
 
 		let packageManager: 'npm' | 'yarn' | 'pnpm' = 'npm';
-		if (fs.existsSync(path.join(this.projectPath, 'pnpm-lock.yaml')))
-			packageManager = 'pnpm';
-		else if (fs.existsSync(path.join(this.projectPath, 'yarn.lock')))
-			packageManager = 'yarn';
+		if (fs.existsSync(path.join(this.projectPath, 'pnpm-lock.yaml'))) packageManager = 'pnpm';
+		else if (fs.existsSync(path.join(this.projectPath, 'yarn.lock'))) packageManager = 'yarn';
 
 		return {
 			platform,
@@ -309,9 +271,7 @@ export class CopilotAnalyzer {
 					.slice(0, 20);
 				for (const file of files) {
 					try {
-						const content = JSON.parse(
-							fs.readFileSync(path.join(sessionsDir, file), 'utf8'),
-						);
+						const content = JSON.parse(fs.readFileSync(path.join(sessionsDir, file), 'utf8'));
 						if (content.messages && Array.isArray(content.messages)) {
 							conversations.push({
 								id: file.replace('.json', ''),
@@ -339,28 +299,20 @@ export class CopilotAnalyzer {
 		};
 
 		const platform =
-			process.platform === 'win32'
-				? 'windows'
-				: process.platform === 'darwin'
-					? 'mac'
-					: 'linux';
+			process.platform === 'win32' ? 'windows' : process.platform === 'darwin' ? 'mac' : 'linux';
 
 		return directories[platform] || undefined;
 	}
 
 	private extractToolUsage(
-		conversations: Conversation[],
-	): Array<{name: string; count: number; lastUsed: string}> {
-		const tools = new Map<string, {count: number; lastUsed: string}>();
+		conversations: Conversation[]
+	): Array<{ name: string; count: number; lastUsed: string }> {
+		const tools = new Map<string, { count: number; lastUsed: string }>();
 
 		for (const conv of conversations) {
 			for (const message of conv.messages) {
-				if (
-					message.role === 'assistant' &&
-					typeof message.content === 'string'
-				) {
-					const copilotSuggestions =
-						message.content.match(/copilot:[\s\S]*?(?=\n\n|$)/gi) || [];
+				if (message.role === 'assistant' && typeof message.content === 'string') {
+					const copilotSuggestions = message.content.match(/copilot:[\s\S]*?(?=\n\n|$)/gi) || [];
 					for (const suggestion of copilotSuggestions) {
 						const existing = tools.get('suggestion') || {
 							count: 0,
@@ -398,9 +350,7 @@ export class CopilotAnalyzer {
 	}
 }
 
-export async function analyzeWithCopilot(
-	projectPath: string,
-): Promise<AnalyzerResult> {
+export async function analyzeWithCopilot(projectPath: string): Promise<AnalyzerResult> {
 	const analyzer = new CopilotAnalyzer(projectPath);
 	return analyzer.analyze();
 }

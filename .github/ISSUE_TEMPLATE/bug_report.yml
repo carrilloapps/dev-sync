@@ -63,7 +63,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: agent-sync Version
+      label: devsync Version
       placeholder: "1.0.0"
 
   - type: textarea

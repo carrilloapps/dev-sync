@@ -1,13 +1,9 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import chokidar, {type FSWatcher} from 'chokidar';
-import {createAnalyzer} from '../analyzers/index.js';
-import {createExporter} from '../exporters/index.js';
-import {
-	type AnalyzerResult,
-	type MigrationResult,
-	type WatchOptions,
-} from '../types/index.js';
+import chokidar, { type FSWatcher } from 'chokidar';
+import { createAnalyzer } from '../analyzers/index.js';
+import { createExporter } from '../exporters/index.js';
+import { type AnalyzerResult, type MigrationResult, type WatchOptions } from '../types/index.js';
 
 export type SyncResult = {
 	success: boolean;
@@ -50,25 +46,16 @@ export class SyncService {
 			const analyzer = createAnalyzer(options.sourceAgent, options.projectPath);
 			analysis = await analyzer.analyze();
 
-			console.log(
-				`Project analyzed: ${analysis.projectContext.sourceFiles.length} files found`,
-			);
+			console.log(`Project analyzed: ${analysis.projectContext.sourceFiles.length} files found`);
 			console.log(`Migrating to ${options.targetAgent} format...`);
 
-			const exporter = createExporter(
-				options.targetAgent,
-				options.projectPath,
-				{
-					overwrite: options.overwrite ?? false,
-					preserveHistory: options.preserveHistory ?? true,
-					validateResults: true,
-				},
-			);
+			const exporter = createExporter(options.targetAgent, options.projectPath, {
+				overwrite: options.overwrite ?? false,
+				preserveHistory: options.preserveHistory ?? true,
+				validateResults: true,
+			});
 
-			migration = await exporter.export(
-				analysis.projectContext,
-				analysis.sessionData,
-			);
+			migration = await exporter.export(analysis.projectContext, analysis.sessionData);
 
 			const result: SyncResult = {
 				success: migration.success,
@@ -96,7 +83,7 @@ export class SyncService {
 			persistent: true,
 			ignoreInitial: true,
 			followSymlinks: false,
-		},
+		}
 	): Promise<string> {
 		const watchId = `watch_${Date.now()}`;
 		const excludePatterns = options.ignored || [
@@ -167,11 +154,7 @@ export class SyncService {
 		return [...this.syncHistory];
 	}
 
-	private handleFileChange(
-		event: string,
-		filePath: string,
-		watchId: string,
-	): void {
+	private handleFileChange(event: string, filePath: string, watchId: string): void {
 		const session = this.sessions.get(watchId);
 		if (session) {
 			session.lastSync = new Date().toISOString();
@@ -194,12 +177,12 @@ export async function syncProject(options: SyncOptions): Promise<SyncResult> {
 export async function watchProject(
 	projectPath: string,
 	sourceAgent: string,
-	options?: WatchOptions,
+	options?: WatchOptions
 ): Promise<string> {
 	return syncService.watch(
 		projectPath,
 		sourceAgent,
-		options ?? {persistent: true, ignoreInitial: true, followSymlinks: false},
+		options ?? { persistent: true, ignoreInitial: true, followSymlinks: false }
 	);
 }
 

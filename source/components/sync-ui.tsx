@@ -1,5 +1,5 @@
 import React from 'react';
-import {Text, Box} from 'ink';
+import { Text, Box } from 'ink';
 
 type SyncStatusProperties = {
 	readonly source: string;
@@ -133,10 +133,7 @@ type AgentSelectorProperties = {
 	readonly detected?: string[];
 };
 
-export function AgentSelector({
-	onSelect,
-	detected = [],
-}: AgentSelectorProperties) {
+export function AgentSelector({ onSelect, detected = [] }: AgentSelectorProperties) {
 	const agents = ['claude-code', 'copilot', 'gemini'];
 
 	return (

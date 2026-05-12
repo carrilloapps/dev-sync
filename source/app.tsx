@@ -1,11 +1,7 @@
-import React, {useState, useEffect} from 'react';
-import {Text, Box} from 'ink';
-import {
-	createAnalyzer,
-	supportedSources,
-	supportedTargets,
-} from './analyzers/index.js';
-import {createExporter} from './exporters/index.js';
+import React, { useState, useEffect } from 'react';
+import { Text, Box } from 'ink';
+import { createAnalyzer, supportedSources, supportedTargets } from './analyzers/index.js';
+import { createExporter } from './exporters/index.js';
 import {
 	syncService,
 	syncProject,
@@ -14,7 +10,7 @@ import {
 	getHistory,
 	type SyncResult,
 } from './commands/sync-service.js';
-import {type WatchOptions} from './types/index.js';
+import { type WatchOptions } from './types/index.js';
 
 type AppProperties = {
 	readonly sourceAgent?: string;
@@ -39,9 +35,7 @@ export default function App({
 	listSources,
 	listTargets,
 }: AppProperties) {
-	const [step, setStep] = useState<
-		'idle' | 'syncing' | 'watching' | 'complete' | 'info'
-	>('idle');
+	const [step, setStep] = useState<'idle' | 'syncing' | 'watching' | 'complete' | 'info'>('idle');
 	const [progress, setProgress] = useState(0);
 	const [currentStep, setCurrentStep] = useState('');
 	const [result, setResult] = useState<SyncResult | undefined>(undefined);
@@ -108,7 +102,7 @@ export default function App({
 			const migrationResult = await exporter.export(
 				analysisResult.projectContext,
 				analysisResult.sessionData,
-				{overwrite},
+				{ overwrite }
 			);
 
 			setProgress(0.8);
@@ -233,9 +227,8 @@ export default function App({
 						history.map((item, i) => (
 							<Box key={i} flexDirection="column" marginTop={1}>
 								<Text color={item.success ? 'green' : 'red'}>
-									{item.success ? '✓' : '✗'}{' '}
-									{item.analysis?.projectContext.sourceFiles.length || 0} files
-									in {item.duration}ms
+									{item.success ? '✓' : '✗'} {item.analysis?.projectContext.sourceFiles.length || 0}{' '}
+									files in {item.duration}ms
 								</Text>
 							</Box>
 						))
@@ -250,7 +243,7 @@ export default function App({
 			<Box flexDirection="column" padding={1}>
 				<Box>
 					<Text bold color="cyan">
-						AGENT-SYNC
+						AI-SYNC
 					</Text>
 					<Text color="white"> - Universal Agent Sync Tool</Text>
 				</Box>
@@ -302,34 +295,27 @@ export default function App({
 						<Text>
 							From: {sourceAgent} → To: {targetIDE}
 						</Text>
-						<Text>
-							Files: {result.analysis.projectContext.sourceFiles.length}
-						</Text>
+						<Text>Files: {result.analysis.projectContext.sourceFiles.length}</Text>
 						<Text>
 							Languages:{' '}
-							{[
-								...new Set(
-									result.analysis.projectContext.sourceFiles.map(
-										(f) => f.language,
-									),
-								),
-							].join(', ')}
+							{[...new Set(result.analysis.projectContext.sourceFiles.map((f) => f.language))].join(
+								', '
+							)}
 						</Text>
 						<Text>Duration: {result.duration}ms</Text>
 					</Box>
 				)}
-				{result.migration?.filesCreated &&
-					result.migration.filesCreated.length > 0 && (
-						<Box marginTop={1} flexDirection="column">
-							<Text bold>Created:</Text>
-							{result.migration.filesCreated.map((file, i) => (
-								<Text key={i} color="cyan">
-									{' '}
-									+ {file}
-								</Text>
-							))}
-						</Box>
-					)}
+				{result.migration?.filesCreated && result.migration.filesCreated.length > 0 && (
+					<Box marginTop={1} flexDirection="column">
+						<Text bold>Created:</Text>
+						{result.migration.filesCreated.map((file, i) => (
+							<Text key={i} color="cyan">
+								{' '}
+								+ {file}
+							</Text>
+						))}
+					</Box>
+				)}
 				{error && (
 					<Box marginTop={1}>
 						<Text color="red">Error: {error}</Text>
@@ -341,7 +327,7 @@ export default function App({
 
 	return (
 		<Box flexDirection="column" padding={1}>
-			<Text>Run agent-sync --help for usage information</Text>
+			<Text>Run sync --help for usage information</Text>
 		</Box>
 	);
 }

@@ -46,14 +46,7 @@ export type EnvironmentInfo = {
 };
 
 export type AnalyzerResult = {
-	source:
-		| 'claude-code'
-		| 'copilot'
-		| 'gemini'
-		| 'opencode'
-		| 'cursor'
-		| 'windsurf'
-		| string;
+	source: 'claude-code' | 'copilot' | 'gemini' | 'opencode' | 'cursor' | 'windsurf' | string;
 	projectContext: ProjectContext;
 	sessionData?: SessionData | undefined;
 	recommendations?: string[];

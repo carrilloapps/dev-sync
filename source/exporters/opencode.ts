@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import {type ProjectContext, type MigrationResult} from '../types/index.js';
-import {BaseExporter} from './index.js';
+import { type ProjectContext, type MigrationResult } from '../types/index.js';
+import { BaseExporter } from './index.js';
 
 export class OpenCodeExporter extends BaseExporter {
 	getId(): string {
@@ -31,30 +31,21 @@ export class OpenCodeExporter extends BaseExporter {
 			this.ensureDir(path.join(this.getWorkspaceDir(), 'cache'));
 			this.ensureDir(path.join(this.getWorkspaceDir(), 'memory'));
 
-			this.writeJson(
-				path.join(this.getWorkspaceDir(), 'config.json'),
-				this.buildConfig(context),
-			);
+			this.writeJson(path.join(this.getWorkspaceDir(), 'config.json'), this.buildConfig(context));
 
-			this.writeJson(
-				path.join(this.getWorkspaceDir(), 'dependencies.json'),
-				context.dependencies,
-			);
+			this.writeJson(path.join(this.getWorkspaceDir(), 'dependencies.json'), context.dependencies);
 
 			this.writeJson(
 				path.join(this.getWorkspaceDir(), 'source-map.json'),
-				this.buildSourceMap(context),
+				this.buildSourceMap(context)
 			);
 
-			this.writeJson(
-				path.join(this.getWorkspaceDir(), 'sessions', 'index.json'),
-				{
-					migratedAt: new Date().toISOString(),
-					conversations: [],
-					tools: [],
-					memory: {learnedPatterns: [], customRules: []},
-				},
-			);
+			this.writeJson(path.join(this.getWorkspaceDir(), 'sessions', 'index.json'), {
+				migratedAt: new Date().toISOString(),
+				conversations: [],
+				tools: [],
+				memory: { learnedPatterns: [], customRules: [] },
+			});
 
 			result.success = true;
 			result.filesCreated = [
@@ -64,9 +55,7 @@ export class OpenCodeExporter extends BaseExporter {
 				'.opencode/sessions/index.json',
 			];
 		} catch (error) {
-			result.errors.push(
-				error instanceof Error ? error.message : String(error),
-			);
+			result.errors.push(error instanceof Error ? error.message : String(error));
 		}
 
 		return result;
@@ -82,21 +71,14 @@ export class OpenCodeExporter extends BaseExporter {
 				files: context.sourceFiles.length,
 				languages: [...new Set(context.sourceFiles.map((f) => f.language))],
 				frameworks: [
-					...new Set(
-						context.sourceFiles
-							.filter((f) => f.framework)
-							.map((f) => f.framework!),
-					),
+					...new Set(context.sourceFiles.filter((f) => f.framework).map((f) => f.framework!)),
 				],
 				totalLines: context.sourceFiles.reduce((sum, f) => sum + f.lines, 0),
 			},
 			dependencies: {
 				count: context.dependencies.length,
-				production: context.dependencies.filter((d) => d.type === 'production')
-					.length,
-				development: context.dependencies.filter(
-					(d) => d.type === 'development',
-				).length,
+				production: context.dependencies.filter((d) => d.type === 'production').length,
+				development: context.dependencies.filter((d) => d.type === 'development').length,
 			},
 			configFiles: context.configFiles.map((c) => ({
 				name: c.path,

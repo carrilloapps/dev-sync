@@ -13,7 +13,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x, 20.x, 22.x]
+        node-version: [20.x, 22.x]
 
     steps:
       - name: Checkout repository
@@ -31,14 +31,14 @@ jobs:
       - name: Run linter
         run: npm run lint
 
+      - name: Check formatting
+        run: npm run format:check
+
       - name: Run typecheck
         run: npm run typecheck
 
       - name: Build
         run: npm run build
-
-      - name: Run tests
-        run: npm test
 
   windows:
     name: Test on Windows

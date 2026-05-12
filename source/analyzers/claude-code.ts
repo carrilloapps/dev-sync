@@ -26,10 +26,7 @@ export class ClaudeCodeAnalyzer {
 			source: 'claude-code',
 			projectContext,
 			sessionData,
-			recommendations: this.generateRecommendations(
-				projectContext,
-				sessionData,
-			),
+			recommendations: this.generateRecommendations(projectContext, sessionData),
 		};
 	}
 
@@ -50,37 +47,19 @@ export class ClaudeCodeAnalyzer {
 
 	private async scanSourceFiles(): Promise<SourceFile[]> {
 		const files: SourceFile[] = [];
-		const extensions = [
-			'.ts',
-			'.tsx',
-			'.js',
-			'.jsx',
-			'.py',
-			'.rs',
-			'.go',
-			'.java',
-		];
+		const extensions = ['.ts', '.tsx', '.js', '.jsx', '.py', '.rs', '.go', '.java'];
 
 		const scanDir = (dir: string) => {
-			const entries = fs.readdirSync(dir, {withFileTypes: true});
+			const entries = fs.readdirSync(dir, { withFileTypes: true });
 			for (const entry of entries) {
 				const fullPath = path.join(dir, entry.name);
 				if (entry.isDirectory()) {
 					if (
-						![
-							'node_modules',
-							'.git',
-							'dist',
-							'build',
-							'target',
-							'__pycache__',
-						].includes(entry.name)
+						!['node_modules', '.git', 'dist', 'build', 'target', '__pycache__'].includes(entry.name)
 					) {
 						scanDir(fullPath);
 					}
-				} else if (
-					extensions.some((extension) => entry.name.endsWith(extension))
-				) {
+				} else if (extensions.some((extension) => entry.name.endsWith(extension))) {
 					const relPath = path.relative(this.projectPath, fullPath);
 					const content = fs.readFileSync(fullPath, 'utf8');
 					const lines = content.split('\n').length;
@@ -141,10 +120,7 @@ export class ClaudeCodeAnalyzer {
 		return langMap[extension] || 'Unknown';
 	}
 
-	private detectFramework(
-		filename: string,
-		content: string,
-	): string | undefined {
+	private detectFramework(filename: string, content: string): string | undefined {
 		if (filename.includes('next')) return 'Next.js';
 		if (filename.includes('react')) return 'React';
 		if (content.includes('vue')) return 'Vue';
@@ -184,7 +160,7 @@ export class ClaudeCodeAnalyzer {
 						configFiles.push({
 							path: filename,
 							type: 'other',
-							content: {raw: content},
+							content: { raw: content },
 						});
 					}
 				}
@@ -202,13 +178,11 @@ export class ClaudeCodeAnalyzer {
 		const deps: Dependency[] = [];
 
 		for (const [name, version] of Object.entries(package_.dependencies || {})) {
-			deps.push({name, version: String(version), type: 'production'});
+			deps.push({ name, version: String(version), type: 'production' });
 		}
 
-		for (const [name, version] of Object.entries(
-			package_.devDependencies || {},
-		)) {
-			deps.push({name, version: String(version), type: 'development'});
+		for (const [name, version] of Object.entries(package_.devDependencies || {})) {
+			deps.push({ name, version: String(version), type: 'development' });
 		}
 
 		return deps;
@@ -216,19 +190,13 @@ export class ClaudeCodeAnalyzer {
 
 	private async detectEnvironment(): Promise<EnvironmentInfo> {
 		const platform =
-			process.platform === 'win32'
-				? 'windows'
-				: process.platform === 'darwin'
-					? 'mac'
-					: 'linux';
+			process.platform === 'win32' ? 'windows' : process.platform === 'darwin' ? 'mac' : 'linux';
 
 		const packagePath = path.join(this.projectPath, 'package.json');
 		let packageManager: 'npm' | 'yarn' | 'pnpm' = 'npm';
 
-		if (fs.existsSync(path.join(this.projectPath, 'pnpm-lock.yaml')))
-			packageManager = 'pnpm';
-		else if (fs.existsSync(path.join(this.projectPath, 'yarn.lock')))
-			packageManager = 'yarn';
+		if (fs.existsSync(path.join(this.projectPath, 'pnpm-lock.yaml'))) packageManager = 'pnpm';
+		else if (fs.existsSync(path.join(this.projectPath, 'yarn.lock'))) packageManager = 'yarn';
 
 		return {
 			platform,
@@ -247,23 +215,14 @@ export class ClaudeCodeAnalyzer {
 		const projectsDir = path.join(claudeDir, 'projects');
 		if (fs.existsSync(projectsDir)) {
 			const currentProjectHash = this.hashPath(this.projectPath);
-			const projectSessionsDir = path.join(
-				projectsDir,
-				currentProjectHash,
-				'sessions',
-			);
+			const projectSessionsDir = path.join(projectsDir, currentProjectHash, 'sessions');
 
 			if (fs.existsSync(projectSessionsDir)) {
-				const sessionFiles = fs
-					.readdirSync(projectSessionsDir)
-					.filter((f) => f.endsWith('.json'));
+				const sessionFiles = fs.readdirSync(projectSessionsDir).filter((f) => f.endsWith('.json'));
 				for (const sessionFile of sessionFiles.slice(0, 10)) {
 					try {
 						const sessionContent = JSON.parse(
-							fs.readFileSync(
-								path.join(projectSessionsDir, sessionFile),
-								'utf8',
-							),
+							fs.readFileSync(path.join(projectSessionsDir, sessionFile), 'utf8')
 						);
 						conversations.push({
 							id: sessionFile.replace('.json', ''),
@@ -275,7 +234,7 @@ export class ClaudeCodeAnalyzer {
 			}
 		}
 
-		return {conversations, tools: this.extractToolUsage(conversations)};
+		return { conversations, tools: this.extractToolUsage(conversations) };
 	}
 
 	private getClaudeCodeDir(): string | undefined {
@@ -287,11 +246,7 @@ export class ClaudeCodeAnalyzer {
 		};
 
 		const platform =
-			process.platform === 'win32'
-				? 'windows'
-				: process.platform === 'darwin'
-					? 'mac'
-					: 'linux';
+			process.platform === 'win32' ? 'windows' : process.platform === 'darwin' ? 'mac' : 'linux';
 
 		return directories[platform] || undefined;
 	}
@@ -308,9 +263,9 @@ export class ClaudeCodeAnalyzer {
 	}
 
 	private extractToolUsage(
-		conversations: Conversation[],
-	): Array<{name: string; count: number; lastUsed: string}> {
-		const tools = new Map<string, {count: number; lastUsed: string}>();
+		conversations: Conversation[]
+	): Array<{ name: string; count: number; lastUsed: string }> {
+		const tools = new Map<string, { count: number; lastUsed: string }>();
 
 		for (const conv of conversations) {
 			for (const message of conv.messages) {
@@ -335,16 +290,11 @@ export class ClaudeCodeAnalyzer {
 		}));
 	}
 
-	private generateRecommendations(
-		context: ProjectContext,
-		session?: SessionData,
-	): string[] {
+	private generateRecommendations(context: ProjectContext, session?: SessionData): string[] {
 		const recs: string[] = [];
 
 		if (context.dependencies.length === 0) {
-			recs.push(
-				'No package.json found - project may use different dependency system',
-			);
+			recs.push('No package.json found - project may use different dependency system');
 		}
 
 		const hasReact = context.dependencies.some((d) => d.name.includes('react'));
@@ -352,25 +302,16 @@ export class ClaudeCodeAnalyzer {
 			recs.push('React project detected - ensure React 18 compatibility');
 		}
 
-		const hasTypeScript = context.configFiles.some(
-			(c) => c.type === 'tsconfig',
-		);
-		if (
-			!hasTypeScript &&
-			context.sourceFiles.some((f) => f.language === 'JavaScript')
-		) {
-			recs.push(
-				'Consider migrating JavaScript to TypeScript for better type safety',
-			);
+		const hasTypeScript = context.configFiles.some((c) => c.type === 'tsconfig');
+		if (!hasTypeScript && context.sourceFiles.some((f) => f.language === 'JavaScript')) {
+			recs.push('Consider migrating JavaScript to TypeScript for better type safety');
 		}
 
 		return recs;
 	}
 }
 
-export async function analyzeWithClaudeCode(
-	projectPath: string,
-): Promise<AnalyzerResult> {
+export async function analyzeWithClaudeCode(projectPath: string): Promise<AnalyzerResult> {
 	const analyzer = new ClaudeCodeAnalyzer(projectPath);
 	return analyzer.analyze();
 }

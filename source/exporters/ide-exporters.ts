@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import {type ProjectContext, type MigrationResult} from '../types/index.js';
-import {BaseExporter, ExporterOptions} from './index.js';
+import { type ProjectContext, type MigrationResult } from '../types/index.js';
+import { BaseExporter, ExporterOptions } from './index.js';
 
 export class VSCodeExporter extends BaseExporter {
 	getId(): string {
@@ -32,23 +32,18 @@ export class VSCodeExporter extends BaseExporter {
 
 			this.writeJson(
 				path.join(this.getWorkspaceDir(), 'workspace-state.json'),
-				this.buildWorkspaceState(context),
+				this.buildWorkspaceState(context)
 			);
 
 			this.writeJson(
 				path.join(this.getWorkspaceDir(), 'file-mappings.json'),
-				this.buildSourceMap(context),
+				this.buildSourceMap(context)
 			);
 
 			result.success = true;
-			result.filesCreated = [
-				'.vscode/workspace-state.json',
-				'.vscode/file-mappings.json',
-			];
+			result.filesCreated = ['.vscode/workspace-state.json', '.vscode/file-mappings.json'];
 		} catch (error) {
-			result.errors.push(
-				error instanceof Error ? error.message : String(error),
-			);
+			result.errors.push(error instanceof Error ? error.message : String(error));
 		}
 
 		return result;
@@ -103,12 +98,12 @@ export class JetBrainsExporter extends BaseExporter {
 
 			this.writeJson(
 				path.join(this.getWorkspaceDir(), 'workspace', 'project-state.json'),
-				this.buildProjectState(context),
+				this.buildProjectState(context)
 			);
 
 			this.writeJson(
 				path.join(this.getWorkspaceDir(), 'file-index.json'),
-				this.buildSourceMap(context),
+				this.buildSourceMap(context)
 			);
 
 			result.success = true;
@@ -117,9 +112,7 @@ export class JetBrainsExporter extends BaseExporter {
 				'.jetbrains/file-index.json',
 			];
 		} catch (error) {
-			result.errors.push(
-				error instanceof Error ? error.message : String(error),
-			);
+			result.errors.push(error instanceof Error ? error.message : String(error));
 		}
 
 		return result;
@@ -134,11 +127,7 @@ export class JetBrainsExporter extends BaseExporter {
 				path: context.projectPath,
 				languages: [...new Set(context.sourceFiles.map((f) => f.language))],
 				frameworks: [
-					...new Set(
-						context.sourceFiles
-							.filter((f) => f.framework)
-							.map((f) => f.framework!),
-					),
+					...new Set(context.sourceFiles.filter((f) => f.framework).map((f) => f.framework!)),
 				],
 			},
 		};
@@ -179,25 +168,16 @@ export class CursorExporter extends BaseExporter {
 			this.ensureDir(path.join(this.getWorkspaceDir(), 'sessions'));
 			this.ensureDir(path.join(this.getWorkspaceDir(), 'mcp'));
 
-			this.writeJson(
-				path.join(this.getWorkspaceDir(), 'config.json'),
-				this.buildConfig(context),
-			);
+			this.writeJson(path.join(this.getWorkspaceDir(), 'config.json'), this.buildConfig(context));
 
-			this.writeJson(
-				path.join(this.getWorkspaceDir(), 'sessions', 'index.json'),
-				{migratedAt: new Date().toISOString()},
-			);
+			this.writeJson(path.join(this.getWorkspaceDir(), 'sessions', 'index.json'), {
+				migratedAt: new Date().toISOString(),
+			});
 
 			result.success = true;
-			result.filesCreated = [
-				'.cursor/config.json',
-				'.cursor/sessions/index.json',
-			];
+			result.filesCreated = ['.cursor/config.json', '.cursor/sessions/index.json'];
 		} catch (error) {
-			result.errors.push(
-				error instanceof Error ? error.message : String(error),
-			);
+			result.errors.push(error instanceof Error ? error.message : String(error));
 		}
 
 		return result;
@@ -209,11 +189,7 @@ export class CursorExporter extends BaseExporter {
 			migratedAt: new Date().toISOString(),
 			languages: [...new Set(context.sourceFiles.map((f) => f.language))],
 			frameworks: [
-				...new Set(
-					context.sourceFiles
-						.filter((f) => f.framework)
-						.map((f) => f.framework!),
-				),
+				...new Set(context.sourceFiles.filter((f) => f.framework).map((f) => f.framework!)),
 			],
 		};
 	}

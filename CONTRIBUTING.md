@@ -37,8 +37,8 @@ By participating in this project, you agree to maintain a respectful and inclusi
 
 ```bash
 # Clone the repository
-git clone https://github.com/carrilloapps/agent-sync.git
-cd agent-sync
+git clone https://github.com/carrilloapps/agentsync.git
+cd sync
 
 # Install dependencies
 npm install
@@ -56,7 +56,7 @@ npm run lint
 ## Project Structure
 
 ```
-agent-sync/
+sync/
 ├── source/
 │   ├── analyzers/     # Agent analyzers (Claude, Copilot, etc.)
 │   ├── exporters/      # IDE exporters (OpenCode, VS Code, etc.)

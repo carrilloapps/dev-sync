@@ -1,173 +1,280 @@
-# Agent Sync
+# AI Sync
 
-**Universal sync tool for AI coding agents and IDEs with MCP support.**
+**Universal sync tool for AI coding agents and IDEs. Never lose context when switching tools.**
 
-[![npm version](https://img.shields.io/npm/v/agent-sync.svg)](https://www.npmjs.com/package/agent-sync)
+[![npm version](https://img.shields.io/npm/v/ai-sync-cli.svg)](https://www.npmjs.com/package/ai-sync-cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org/)
-[![Twitter Follow](https://img.shields.io/twitter/follow/carrilloapps?style=social)](https://x.com/carrilloapps)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org/)
 
-> Developed by [José Carrillo](https://carrillo.app) - Senior Fullstack Developer & Tech Lead
+## The Problem
 
-Agent Sync bridges the gap between AI coding agents and IDEs, enabling seamless project synchronization, conversation migration, and unified workspace management.
+You're deep in a conversation with Claude Code, building a complex feature. Then:
+- The session hits the token limit
+- You need to switch to VS Code for debugging
+- Your colleague uses Copilot and needs your context
 
-## Features
+**Without AI Sync:** You lose everything. Start over, re-explain, lose hours.
 
-- **Multi-Agent Support**: Sync from Claude Code, Copilot, Gemini, Cursor, WindSurf, and more
-- **Multi-IDE Targets**: Export to OpenCode, VS Code, JetBrains, Cursor, Sublime, Vim, Emacs, and others
-- **MCP Protocol**: Full Model Context Protocol server for integration with AI clients
-- **Conversation Management**: List, export, and update conversations across agents
-- **Real-time Sync**: Watch mode for automatic project synchronization
-- **Cross-Platform**: Works on Windows, macOS, and Linux
-
-## Key Use Case: Continue When Tokens Run Out
-
-**The problem:** You're working with Claude Code, hit the token limit, and lose all context.
-
-**The solution:** Agent Sync saves your conversation so you can continue in any IDE.
-
-```bash
-# Save from Claude Code
-agent-sync --from=claude-code --to=opencode --path=./mi-proyecto
-
-# Continue in VS Code, Cursor, JetBrains, etc.
-# All your conversation context is preserved!
-```
-
-See [Practical Usage Guide](docs/USAGE_PRACTICAL.md) for detailed workflows.
+**With AI Sync:** Your conversation travels with you. Seamless handoff between any AI tool.
 
 ## Quick Start
 
 ```bash
-# Install globally
-npm install -g agent-sync
+# Install
+npm install -g ai-sync-cli
 
-# Or use with npx
-npx agent-sync --from=claude-code --to=opencode --path=./my-project
+# Sync from Claude to VS Code (direct, no subcommand needed)
+ai-sync --from claude --to vscode --path ./my-project
 ```
 
-## Usage
+## How It Works
 
-### CLI
+```mermaid
+flowchart LR
+    A[Claude Code] -->|ai-sync| B[VS Code]
+    B -->|Continue| C[Full Context]
+    A -->|ai-sync| D[Cursor]
+    A -->|ai-sync| E[JetBrains]
+    A -->|ai-sync| F[WindSurf]
+```
+
+## Installation
 
 ```bash
-# Sync from Claude Code to OpenCode
-agent-sync --from=claude-code --to=opencode --path=./project
+# npm
+npm install -g ai-sync-cli
 
-# Sync from Copilot to VS Code
-agent-sync -f copilot -t vscode -p ./project
+# yarn
+yarn global add ai-sync-cli
 
-# List supported sources
-agent-sync --listSources
+# pnpm
+pnpm add -g ai-sync-cli
 
-# List supported targets
-agent-sync --listTargets
+# No install? Use npx
+npx ai-sync --from claude --to vscode --path ./project
+```
 
-# Watch mode for real-time sync
-agent-sync --from=gemini --to=jetbrains --path=./project --watch
+## Usage Examples
+
+### Basic Sync
+
+```bash
+# Claude → VS Code (flags work directly, no sync subcommand)
+ai-sync --from claude --to vscode --path ./my-app
+
+# Short flags
+ai-sync -f claude -t vscode -p ./my-app
+
+# Preview what will sync (dry run)
+ai-sync --dry-run
+```
+
+### Real-time Watch Mode
+
+```bash
+# Watch for changes and auto-sync
+ai-sync --from claude --to opencode --path ./project --watch
+```
+
+### Central Mode (One Source, All Targets)
+
+```mermaid
+flowchart TB
+    C[Claude<br/>Central] -->|sync to all| O[OpenCode]
+    C -->|sync to all| V[VS Code]
+    C -->|sync to all| Cu[Cursor]
+    C -->|sync to all| J[JetBrains]
+    C -->|sync to all| W[WindSurf]
+```
+
+```bash
+# Use Claude as central source, sync to ALL detected tools
+ai-sync --central claude
+```
+
+### Global Mode (Your Personal Library)
+
+```bash
+# Sync from your global skills/commands library
+ai-sync --global
 ```
 
 ### MCP Server
 
-```bash
-# Start MCP server
-npx agent-sync-mcp
+The MCP server is included in the same package:
 
-# Or in configuration
+```bash
+# Start the MCP server
+npx ai-sync-mcp
+
+# Configure in Claude Desktop
 {
   "mcpServers": {
-    "agent-sync": {
+    "ai-sync": {
       "command": "npx",
-      "args": ["agent-sync-mcp"]
+      "args": ["ai-sync-mcp"]
     }
   }
 }
 ```
 
-## Documentation
+### List Available Tools
 
-- [Installation Guide](docs/INSTALLATION.md) - Detailed installation instructions
-- [Usage Guide](docs/USAGE.md) - Complete usage documentation
-- [Practical Usage](docs/USAGE_PRACTICAL.md) - Real-world scenarios like continuing conversations when tokens run out
-- [MCP Integration](docs/MCP.md) - MCP server setup and tools
-- [API Reference](docs/API.md) - Programmatic API documentation
-- [Contributing](CONTRIBUTING.md) - How to contribute to the project
+```bash
+# Show all supported agents
+ai-sync list agents
 
-## Supported Agents
+# Show all supported IDEs
+ai-sync list tools
+```
 
-| Agent | Description |
-|-------|-------------|
-| `claude-code` | Anthropic's Claude Code |
-| `copilot` | GitHub Copilot |
-| `gemini` | Google Gemini |
-| `cursor` | Cursor IDE |
-| `windsurf` | WindSurf IDE |
-| `trae` | Trae IDE |
-| `codepal` | CodePal |
-| `aider` | Aider CLI |
-| `continue` | Continue Dev |
-| `replit` | Replit Agent |
-| `devin` | Devin AI |
+### Diagnostics
 
-## Supported IDEs
+```bash
+# Check configuration and connectivity
+ai-sync doctor
 
-| IDE | Config Directory |
-|-----|-----------------|
-| `opencode` | `.opencode/` |
-| `vscode` | `.vscode/` |
-| `jetbrains` | `.jetbrains/` |
-| `cursor` | `.cursor/` |
-| `sublime` | `.sublime/` |
-| `vim` | `.vim/` |
-| `emacs` | `.emacs.d/` |
-| `atom` | `.atom/` |
-| `lapce` | `.lapce/` |
-| `zed` | `.zed/` |
+# JSON output for automation
+ai-sync doctor --json
+```
+
+## Workflow Example
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant CC as Claude Code
+    participant AS as AI Sync
+    participant VS as VS Code
+
+    Note over U,CC: User working with Claude Code
+    CC->>U: Hits token limit
+    U->>AS: ai-sync --from claude --to vscode
+    AS->>VS: Syncs conversation & context
+    Note over VS: Full history available
+    VS->>U: Continue where Claude left off
+```
+
+## Features
+
+- **🔄 Sync Anywhere** - Move between Claude, Copilot, Gemini, Cursor, WindSurf, and 20+ agents
+- **📁 All IDEs** - Export to VS Code, JetBrains, Zed, Vim, Emacs, and more
+- **💾 Conversations Travel** - Your session context follows you, not just files
+- **⏰ Real-time Watch** - Auto-sync as you code
+- **🧠 Central Mode** - One agent as source, all others sync automatically
+- **🔌 MCP Built-in** - Full Model Context Protocol server for AI integration
+
+## Configuration
+
+Create `.agents/agentsync.toml` in your project:
+
+```toml
+# Tools to sync
+tools = ["claude", "opencode", "vscode"]
+
+# MCP servers
+[mcp.github]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-github"]
+
+# Profiles
+[profiles.frontend]
+tools = ["claude", "cursor"]
+
+[profiles.backend]
+tools = ["claude", "jetbrains"]
+```
 
 ## MCP Tools
 
-- `list_agents` - List all supported agents and targets
-- `sync_project` - Sync project between agents
-- `list_conversations` - List conversations from an agent
-- `export_conversation` - Export a specific conversation
-- `update_conversation` - Update conversation with new messages
-- `analyze_project` - Analyze project structure
-- `get_project_state` - Get current sync state
+| Tool | Description |
+|------|-------------|
+| `list_agents` | List all supported agents and IDEs |
+| `sync_project` | Sync a project between agents |
+| `list_conversations` | List all conversations with stats |
+| `export_conversation` | Export a specific conversation |
+| `update_conversation` | Add messages to a conversation |
+| `analyze_project` | Get project structure and context |
+| `get_project_state` | Get current sync state |
 
-## MCP Integration
+## Architecture Overview
 
-Agent Sync provides a full MCP server for integration with:
-- **IDEs**: VS Code, Cursor, JetBrains, Neovim, Emacs
-- **AI Agents**: Claude Code, GitHub Copilot, WindSurf, and more
+```mermaid
+flowchart TB
+    subgraph CLI
+        C[ai-sync CLI]
+    end
 
-See the [MCP Integration Guide](docs/MCP.md) for detailed setup instructions for each IDE and AI agent.
+    subgraph MCP
+        M[ai-sync-mcp<br/>Server]
+    end
+
+    subgraph Agents
+        CC[Claude Code]
+        CO[Copilot]
+        GE[Gemini]
+    end
+
+    subgraph IDEs
+        VS[VS Code]
+        JT[JetBrains]
+        CD[Cursor]
+    end
+
+    C -->|sync| Agents
+    M -->|MCP protocol| IDEs
+    Agents -->|read/write| IDEs
+```
+
+## Supported Agents
+
+| Agent | ID |
+|-------|-----|
+| Claude Code | `claude` |
+| GitHub Copilot | `copilot` |
+| Google Gemini | `gemini` |
+| Cursor | `cursor` |
+| WindSurf | `windsurf` |
+| Aider | `aider` |
+| Continue | `continue` |
+| Amazon Q | `amazonq` |
+| Codex | `codex` |
+| Devin | `devin` |
+| Replit | `replit` |
+| And 15+ more... | |
+
+## Supported IDEs
+
+| IDE | Directory |
+|-----|----------|
+| OpenCode | `.agents/` |
+| VS Code | `.vscode/` |
+| JetBrains | `.jetbrains/` |
+| Cursor | `.cursor/` |
+| Zed | `.zed/` |
+| Vim/Neovim | `.vim/` |
+| Emacs | `.emacs.d/` |
+| WindSurf | `.windsurf/` |
+| Lapce | `.lapce/` |
+| Nova | `.nova/` |
+
+## Documentation
+
+- [Installation Guide](docs/INSTALLATION.md) - Detailed installation
+- [Usage Guide](docs/USAGE.md) - All commands and options
+- [Practical Examples](docs/USAGE_PRACTICAL.md) - Real-world workflows
+- [MCP Setup](docs/MCP.md) - IDE and agent integration
+- [API Reference](docs/API.md) - Programmatic usage
 
 ## Requirements
 
-- Node.js >= 18.0.0
+- Node.js >= 20.0.0
 - npm, yarn, or pnpm
-
-## About the Author
-
-**José Carrillo** - Senior Fullstack Developer & Tech Lead
-
-<p align="left">
-<a href="https://dev.to/carrilloapps" target="blank"><img src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/devto.svg" alt="José Carrillo on Dev.to" height="30" width="40" /></a>
-<a href="https://x.com/carrilloapps" target="blank"><img src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/twitter.svg" alt="José Carrillo on X Twitter" height="30" width="40" /></a>
-<a href="https://linkedin.com/in/carrilloapps" target="blank"><img src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/linked-in-alt.svg" alt="José Carrillo on LinkedIn" height="30" width="40" /></a>
-<a href="https://stackoverflow.com/users/14580648" target="blank"><img src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/stack-overflow.svg" alt="José Carrillo on StackOverflow" height="30" width="40" /></a>
-<a href="https://medium.com/@carrilloapps" target="blank"><img src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/medium.svg" alt="José Carrillo on Medium" height="30" width="40" /></a>
-<a href="https://www.youtube.com/channel/uciwxfli0q78rqlmogbyve-g" target="blank"><img src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/youtube.svg" alt="José Carrillo on YouTube" height="30" width="40" /></a>
-</p>
-
-- Website: [carrillo.app](https://carrillo.app)
-- Email: [m@carrillo.app](mailto:m@carrillo.app)
-- Telegram: [@carrilloapps](https://t.me/carrilloapps)
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT License - see [LICENSE](LICENSE)
 
-## Contributing
+---
 
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Built by [José Carrillo](https://carrillo.app)

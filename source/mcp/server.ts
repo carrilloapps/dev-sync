@@ -1,18 +1,14 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import {Server} from '@modelcontextprotocol/sdk/server';
-import {StdioServerTransport} from '@modelcontextprotocol/sdk/server/stdio.js';
+import { Server } from '@modelcontextprotocol/sdk/server';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
 	CallToolRequestSchema,
 	ListToolsRequestSchema,
 	type Tool,
 } from '@modelcontextprotocol/sdk/types.js';
-import {
-	createAnalyzer,
-	supportedSources,
-	supportedTargets,
-} from '../analyzers/index.js';
-import {createExporter} from '../exporters/index.js';
+import { createAnalyzer, supportedSources, supportedTargets } from '../analyzers/index.js';
+import { createExporter } from '../exporters/index.js';
 
 type ConversationStats = {
 	id: string;
@@ -66,23 +62,21 @@ const TOOLS: Tool[] = [
 	},
 	{
 		name: 'sync_project',
-		description:
-			'Sync a project from one agent/IDE to another, including conversations',
+		description: 'Sync a project from one agent/IDE to another, including conversations',
 		inputSchema: {
 			type: 'object',
 			properties: {
-				from: {type: 'string'},
-				to: {type: 'string'},
-				projectPath: {type: 'string'},
-				overwrite: {type: 'boolean', default: false},
+				from: { type: 'string' },
+				to: { type: 'string' },
+				projectPath: { type: 'string' },
+				overwrite: { type: 'boolean', default: false },
 			},
 			required: ['from', 'to', 'projectPath'],
 		},
 	},
 	{
 		name: 'list_conversations',
-		description:
-			'List all conversations from a source agent or target IDE with detailed stats',
+		description: 'List all conversations from a source agent or target IDE with detailed stats',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -92,10 +86,9 @@ const TOOLS: Tool[] = [
 				},
 				projectPath: {
 					type: 'string',
-					description:
-						'Project path for target IDEs, optional for source agents',
+					description: 'Project path for target IDEs, optional for source agents',
 				},
-				detailed: {type: 'boolean', default: true},
+				detailed: { type: 'boolean', default: true },
 			},
 			required: ['id'],
 		},
@@ -106,9 +99,9 @@ const TOOLS: Tool[] = [
 		inputSchema: {
 			type: 'object',
 			properties: {
-				id: {type: 'string', description: 'Agent or IDE id'},
-				conversationId: {type: 'string'},
-				projectPath: {type: 'string'},
+				id: { type: 'string', description: 'Agent or IDE id' },
+				conversationId: { type: 'string' },
+				projectPath: { type: 'string' },
 			},
 			required: ['id', 'conversationId'],
 		},
@@ -119,10 +112,10 @@ const TOOLS: Tool[] = [
 		inputSchema: {
 			type: 'object',
 			properties: {
-				from: {type: 'string', description: 'Source agent/IDE id'},
-				conversationId: {type: 'string'},
-				to: {type: 'string', description: 'Target IDE id'},
-				projectPath: {type: 'string'},
+				from: { type: 'string', description: 'Source agent/IDE id' },
+				conversationId: { type: 'string' },
+				to: { type: 'string', description: 'Target IDE id' },
+				projectPath: { type: 'string' },
 			},
 			required: ['from', 'conversationId', 'to', 'projectPath'],
 		},
@@ -133,19 +126,19 @@ const TOOLS: Tool[] = [
 		inputSchema: {
 			type: 'object',
 			properties: {
-				id: {type: 'string', description: 'Target IDE id'},
-				conversationId: {type: 'string'},
+				id: { type: 'string', description: 'Target IDE id' },
+				conversationId: { type: 'string' },
 				messages: {
 					type: 'array',
 					items: {
 						type: 'object',
 						properties: {
-							role: {type: 'string'},
-							content: {type: 'string'},
+							role: { type: 'string' },
+							content: { type: 'string' },
 						},
 					},
 				},
-				projectPath: {type: 'string'},
+				projectPath: { type: 'string' },
 			},
 			required: ['id', 'conversationId', 'messages', 'projectPath'],
 		},
@@ -156,7 +149,7 @@ const TOOLS: Tool[] = [
 		inputSchema: {
 			type: 'object',
 			properties: {
-				projectPath: {type: 'string'},
+				projectPath: { type: 'string' },
 			},
 			required: ['projectPath'],
 		},
@@ -167,7 +160,7 @@ const TOOLS: Tool[] = [
 		inputSchema: {
 			type: 'object',
 			properties: {
-				projectPath: {type: 'string'},
+				projectPath: { type: 'string' },
 				target: {
 					type: 'string',
 					enum: ['opencode', 'vscode', 'jetbrains', 'cursor'],
@@ -182,7 +175,7 @@ const TOOLS: Tool[] = [
 		inputSchema: {
 			type: 'object',
 			properties: {
-				id: {type: 'string', description: 'Agent or IDE id'},
+				id: { type: 'string', description: 'Agent or IDE id' },
 				projectPath: {
 					type: 'string',
 					description: 'Project path for target IDEs',
@@ -211,10 +204,7 @@ export class AgentSyncMCPServer {
 	private readonly server: Server;
 
 	constructor() {
-		this.server = new Server(
-			{name: 'agent-sync', version: '1.0.0'},
-			{capabilities: {tools: {}}},
-		);
+		this.server = new Server({ name: 'sync', version: '1.0.0' }, { capabilities: { tools: {} } });
 		this.setupHandlers();
 	}
 
@@ -223,80 +213,74 @@ export class AgentSyncMCPServer {
 			tools: TOOLS,
 		}));
 
-		this.server.setRequestHandler(
-			CallToolRequestSchema,
-			async (request: any) => {
-				try {
-					const {name, arguments: arguments_} = request.params;
-					switch (name) {
-						case 'list_agents': {
-							return this.handleListAgents(arguments_);
-						}
-
-						case 'sync_project': {
-							return this.handleSyncProject(arguments_);
-						}
-
-						case 'list_conversations': {
-							return this.handleListConversations(arguments_);
-						}
-
-						case 'get_conversation': {
-							return this.handleGetConversation(arguments_);
-						}
-
-						case 'export_conversation': {
-							return this.handleExportConversation(arguments_);
-						}
-
-						case 'update_conversation': {
-							return this.handleUpdateConversation(arguments_);
-						}
-
-						case 'analyze_project': {
-							return this.handleAnalyzeProject(arguments_);
-						}
-
-						case 'get_project_state': {
-							return this.handleGetProjectState(arguments_);
-						}
-
-						case 'get_resources': {
-							return this.handleGetResources(arguments_);
-						}
-
-						case 'list_projects': {
-							return this.handleListProjects(arguments_);
-						}
-
-						default: {
-							return {
-								content: [{type: 'text', text: `Unknown tool: ${name}`}],
-							};
-						}
+		this.server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
+			try {
+				const { name, arguments: arguments_ } = request.params;
+				switch (name) {
+					case 'list_agents': {
+						return this.handleListAgents(arguments_);
 					}
-				} catch (error) {
-					return {
-						content: [
-							{
-								type: 'text',
-								text: `Error: ${error instanceof Error ? error.message : String(error)}`,
-							},
-						],
-					};
+
+					case 'sync_project': {
+						return this.handleSyncProject(arguments_);
+					}
+
+					case 'list_conversations': {
+						return this.handleListConversations(arguments_);
+					}
+
+					case 'get_conversation': {
+						return this.handleGetConversation(arguments_);
+					}
+
+					case 'export_conversation': {
+						return this.handleExportConversation(arguments_);
+					}
+
+					case 'update_conversation': {
+						return this.handleUpdateConversation(arguments_);
+					}
+
+					case 'analyze_project': {
+						return this.handleAnalyzeProject(arguments_);
+					}
+
+					case 'get_project_state': {
+						return this.handleGetProjectState(arguments_);
+					}
+
+					case 'get_resources': {
+						return this.handleGetResources(arguments_);
+					}
+
+					case 'list_projects': {
+						return this.handleListProjects(arguments_);
+					}
+
+					default: {
+						return {
+							content: [{ type: 'text', text: `Unknown tool: ${name}` }],
+						};
+					}
 				}
-			},
-		);
+			} catch (error) {
+				return {
+					content: [
+						{
+							type: 'text',
+							text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+						},
+					],
+				};
+			}
+		});
 	}
 
 	private estimateTokens(text: string): number {
 		return Math.ceil(text.length / 4);
 	}
 
-	private getConversationStats(
-		filePath: string,
-		id: string,
-	): ConversationStats {
+	private getConversationStats(filePath: string, id: string): ConversationStats {
 		const stats: ConversationStats = {
 			id,
 			messageCount: 0,
@@ -316,19 +300,16 @@ export class AgentSyncMCPServer {
 			const data = JSON.parse(content);
 			const messages = data.messages || [];
 			stats.messageCount = messages.length;
-			stats.createdAt =
-				data.timestamp || data.migratedAt || new Date().toISOString();
+			stats.createdAt = data.timestamp || data.migratedAt || new Date().toISOString();
 			stats.updatedAt = data.updatedAt || stats.createdAt;
 
 			for (const message of messages) {
-				const text =
-					typeof message === 'string' ? message : message.content || '';
+				const text = typeof message === 'string' ? message : message.content || '';
 				stats.totalChars += text.length;
 				stats.estimatedTokens += this.estimateTokens(text);
 				const role = (message.role || 'unknown').toLowerCase();
 				if (role === 'user' || role === 'human') stats.userMessages++;
-				else if (role === 'assistant' || role === 'ai' || role === 'bot')
-					stats.assistantMessages++;
+				else if (role === 'assistant' || role === 'ai' || role === 'bot') stats.assistantMessages++;
 			}
 		} catch {}
 
@@ -336,9 +317,7 @@ export class AgentSyncMCPServer {
 	}
 
 	private isSourceAgent(id: string): boolean {
-		return ['claude-code', 'copilot', 'gemini', 'cursor', 'windsurf'].includes(
-			id,
-		);
+		return ['claude-code', 'copilot', 'gemini', 'cursor', 'windsurf'].includes(id);
 	}
 
 	private isTargetIde(id: string): boolean {
@@ -347,11 +326,7 @@ export class AgentSyncMCPServer {
 
 	private getSourceDir(id: string, projectPath?: string): string | undefined {
 		const directories: Record<string, string> = {
-			'claude-code': path.join(
-				process.env.APPDATA || '',
-				'Claude',
-				'claude-code',
-			),
+			'claude-code': path.join(process.env.APPDATA || '', 'Claude', 'claude-code'),
 			copilot: path.join(process.env.APPDATA || '', 'Code', 'User'),
 			gemini: path.join(process.env.LOCALAPPDATA || '', 'Google', 'Gemini'),
 			cursor: path.join(process.env.APPDATA || '', 'Cursor'),
@@ -376,10 +351,7 @@ export class AgentSyncMCPServer {
 		return dir ? path.join(projectPath, dir, 'sessions') : undefined;
 	}
 
-	private getConversationsDir(
-		id: string,
-		projectPath?: string,
-	): string | undefined {
+	private getConversationsDir(id: string, projectPath?: string): string | undefined {
 		if (this.isSourceAgent(id)) {
 			return this.getSourceDir(id, projectPath);
 		}
@@ -391,18 +363,13 @@ export class AgentSyncMCPServer {
 		return undefined;
 	}
 
-	private getAllConversationStats(
-		id: string,
-		projectPath?: string,
-	): ConversationStats[] {
+	private getAllConversationStats(id: string, projectPath?: string): ConversationStats[] {
 		const stats: ConversationStats[] = [];
 		const dir = this.getConversationsDir(id, projectPath);
 		if (!dir || !fs.existsSync(dir)) return stats;
 
 		try {
-			const files = fs
-				.readdirSync(dir)
-				.filter((f) => f.endsWith('.json') && f !== 'index.json');
+			const files = fs.readdirSync(dir).filter((f) => f.endsWith('.json') && f !== 'index.json');
 			for (const file of files) {
 				const filePath = path.join(dir, file);
 				const convId = file.replace('.json', '');
@@ -410,10 +377,7 @@ export class AgentSyncMCPServer {
 			}
 		} catch {}
 
-		return stats.sort(
-			(a, b) =>
-				new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-		);
+		return stats.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 	}
 
 	private handleListAgents(arguments_: any) {
@@ -454,7 +418,7 @@ export class AgentSyncMCPServer {
 	}
 
 	private async handleSyncProject(arguments_: any) {
-		const {from, to, projectPath, overwrite} = arguments_;
+		const { from, to, projectPath, overwrite } = arguments_;
 
 		if (this.isSourceAgent(from)) {
 			const analyzer = createAnalyzer(from, projectPath);
@@ -467,10 +431,7 @@ export class AgentSyncMCPServer {
 			await exporter.export(result.projectContext, result.sessionData);
 
 			const convStats = this.getAllConversationStats(from, projectPath);
-			const totalTokens = convStats.reduce(
-				(sum, c) => sum + c.estimatedTokens,
-				0,
-			);
+			const totalTokens = convStats.reduce((sum, c) => sum + c.estimatedTokens, 0);
 			const totalMsgs = convStats.reduce((sum, c) => sum + c.messageCount, 0);
 
 			return {
@@ -518,13 +479,10 @@ export class AgentSyncMCPServer {
 						shell: '',
 					},
 				},
-				{conversations, tools: []},
+				{ conversations, tools: [] }
 			);
 
-			const totalTokens = convStats.reduce(
-				(sum, c) => sum + c.estimatedTokens,
-				0,
-			);
+			const totalTokens = convStats.reduce((sum, c) => sum + c.estimatedTokens, 0);
 			const totalMsgs = convStats.reduce((sum, c) => sum + c.messageCount, 0);
 
 			return {
@@ -540,13 +498,13 @@ export class AgentSyncMCPServer {
 		}
 
 		return {
-			content: [{type: 'text', text: `Unknown source: ${from}`}],
+			content: [{ type: 'text', text: `Unknown source: ${from}` }],
 			isError: true,
 		};
 	}
 
 	private handleListConversations(arguments_: any) {
-		const {id, projectPath, detailed} = arguments_;
+		const { id, projectPath, detailed } = arguments_;
 		const stats = this.getAllConversationStats(id, projectPath);
 
 		if (stats.length === 0) {
@@ -577,7 +535,7 @@ export class AgentSyncMCPServer {
 				output += `└─\n`;
 			}
 
-			return {content: [{type: 'text', text: output}]};
+			return { content: [{ type: 'text', text: output }] };
 		}
 
 		return {
@@ -591,20 +549,18 @@ export class AgentSyncMCPServer {
 	}
 
 	private handleGetConversation(arguments_: any) {
-		const {id, conversationId, projectPath} = arguments_;
+		const { id, conversationId, projectPath } = arguments_;
 		const dir = this.getConversationsDir(id, projectPath);
 		if (!dir)
 			return {
-				content: [{type: 'text', text: `Cannot determine directory for ${id}`}],
+				content: [{ type: 'text', text: `Cannot determine directory for ${id}` }],
 				isError: true,
 			};
 
 		const filePath = path.join(dir, `${conversationId}.json`);
 		if (!fs.existsSync(filePath)) {
 			return {
-				content: [
-					{type: 'text', text: `Conversation ${conversationId} not found`},
-				],
+				content: [{ type: 'text', text: `Conversation ${conversationId} not found` }],
 				isError: true,
 			};
 		}
@@ -625,23 +581,22 @@ export class AgentSyncMCPServer {
 
 			for (const [i, message] of messages.entries()) {
 				const role = message.role || 'unknown';
-				const text =
-					typeof message === 'string' ? message : message.content || '';
+				const text = typeof message === 'string' ? message : message.content || '';
 				const preview = text.length > 300 ? text.slice(0, 300) + '...' : text;
 				output += `[${i + 1}] ${role.toUpperCase()}:\n${preview}\n\n`;
 			}
 
-			return {content: [{type: 'text', text: output}]};
+			return { content: [{ type: 'text', text: output }] };
 		} catch (error) {
 			return {
-				content: [{type: 'text', text: `Error reading conversation: ${error}`}],
+				content: [{ type: 'text', text: `Error reading conversation: ${error}` }],
 				isError: true,
 			};
 		}
 	}
 
 	private async handleExportConversation(arguments_: any) {
-		const {from, conversationId, to, projectPath} = arguments_;
+		const { from, conversationId, to, projectPath } = arguments_;
 
 		const sourceDir = this.getConversationsDir(from, projectPath);
 		if (!sourceDir)
@@ -680,8 +635,7 @@ export class AgentSyncMCPServer {
 			const convData = {
 				id: conversationId,
 				messages: data.messages || [],
-				timestamp:
-					data.timestamp || data.migratedAt || new Date().toISOString(),
+				timestamp: data.timestamp || data.migratedAt || new Date().toISOString(),
 			};
 
 			if (this.isSourceAgent(from)) {
@@ -705,7 +659,7 @@ export class AgentSyncMCPServer {
 							shell: '',
 						},
 					},
-					{conversations: [convData], tools: []},
+					{ conversations: [convData], tools: [] }
 				);
 			}
 
@@ -719,14 +673,14 @@ export class AgentSyncMCPServer {
 			};
 		} catch (error) {
 			return {
-				content: [{type: 'text', text: `Error: ${error}`}],
+				content: [{ type: 'text', text: `Error: ${error}` }],
 				isError: true,
 			};
 		}
 	}
 
 	private handleUpdateConversation(arguments_: any) {
-		const {id, conversationId, messages, projectPath} = arguments_;
+		const { id, conversationId, messages, projectPath } = arguments_;
 
 		if (!this.isTargetIde(id)) {
 			return {
@@ -743,14 +697,12 @@ export class AgentSyncMCPServer {
 		const dir = this.getTargetDir(id, projectPath);
 		if (!dir)
 			return {
-				content: [
-					{type: 'text', text: `Cannot determine target directory for ${id}`},
-				],
+				content: [{ type: 'text', text: `Cannot determine target directory for ${id}` }],
 				isError: true,
 			};
 
 		if (!fs.existsSync(dir)) {
-			fs.mkdirSync(dir, {recursive: true});
+			fs.mkdirSync(dir, { recursive: true });
 		}
 
 		const convFile = path.join(dir, `${conversationId}.json`);
@@ -783,13 +735,11 @@ export class AgentSyncMCPServer {
 	}
 
 	private async handleAnalyzeProject(arguments_: any) {
-		const {projectPath} = arguments_;
+		const { projectPath } = arguments_;
 
 		if (!fs.existsSync(projectPath)) {
 			return {
-				content: [
-					{type: 'text', text: `Project path does not exist: ${projectPath}`},
-				],
+				content: [{ type: 'text', text: `Project path does not exist: ${projectPath}` }],
 				isError: true,
 			};
 		}
@@ -803,32 +753,19 @@ export class AgentSyncMCPServer {
 		const scanDir = (dir: string, depth = 0) => {
 			if (depth > 5) return;
 			try {
-				const entries = fs.readdirSync(dir, {withFileTypes: true});
+				const entries = fs.readdirSync(dir, { withFileTypes: true });
 				for (const entry of entries) {
 					const fullPath = path.join(dir, entry.name);
 					if (entry.isDirectory()) {
-						if (
-							!['node_modules', '.git', 'dist', 'build', '.next'].includes(
-								entry.name,
-							)
-						) {
+						if (!['node_modules', '.git', 'dist', 'build', '.next'].includes(entry.name)) {
 							scanDir(fullPath, depth + 1);
 						}
 					} else {
 						const extension = path.extname(entry.name);
 						if (
-							[
-								'.ts',
-								'.tsx',
-								'.js',
-								'.jsx',
-								'.py',
-								'.rs',
-								'.go',
-								'.java',
-								'.cpp',
-								'.c',
-							].includes(extension)
+							['.ts', '.tsx', '.js', '.jsx', '.py', '.rs', '.go', '.java', '.cpp', '.c'].includes(
+								extension
+							)
 						) {
 							files.push({
 								path: path.relative(projectPath, fullPath),
@@ -868,9 +805,7 @@ export class AgentSyncMCPServer {
 			'.go': 'Go',
 			'.java': 'Java',
 		};
-		languages = [
-			...new Set(files.map((f) => extensionToLang[f.ext] || 'Unknown')),
-		];
+		languages = [...new Set(files.map((f) => extensionToLang[f.ext] || 'Unknown'))];
 
 		const totalSize = 0;
 		const totalLines = 0;
@@ -894,7 +829,7 @@ export class AgentSyncMCPServer {
 	}
 
 	private handleGetProjectState(arguments_: any) {
-		const {projectPath, target} = arguments_;
+		const { projectPath, target } = arguments_;
 		const targetDirectories: Record<string, string> = {
 			opencode: '.opencode',
 			vscode: '.vscode',
@@ -904,20 +839,20 @@ export class AgentSyncMCPServer {
 		const configFile = path.join(
 			projectPath,
 			targetDirectories[target] || target,
-			target === 'opencode' ? 'config.json' : 'workspace-state.json',
+			target === 'opencode' ? 'config.json' : 'workspace-state.json'
 		);
 		if (!fs.existsSync(configFile))
 			return {
-				content: [{type: 'text', text: `No state found for ${target}`}],
+				content: [{ type: 'text', text: `No state found for ${target}` }],
 			};
 		const config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 		return {
-			content: [{type: 'text', text: JSON.stringify(config, null, 2)}],
+			content: [{ type: 'text', text: JSON.stringify(config, null, 2) }],
 		};
 	}
 
 	private handleGetResources(arguments_: any) {
-		const {id, projectPath} = arguments_;
+		const { id, projectPath } = arguments_;
 
 		if (this.isSourceAgent(id)) {
 			return this.getSourceResources(id, projectPath);
@@ -928,15 +863,15 @@ export class AgentSyncMCPServer {
 		}
 
 		return {
-			content: [{type: 'text', text: `Unknown id: ${id}`}],
+			content: [{ type: 'text', text: `Unknown id: ${id}` }],
 			isError: true,
 		};
 	}
 
 	private getSourceResources(
 		agent: string,
-		projectPath?: string,
-	): {content: Array<{type: 'text'; text: string}>} {
+		projectPath?: string
+	): { content: Array<{ type: 'text'; text: string }> } {
 		const baseDir = this.getSourceDir(agent, projectPath) || '';
 		const resources: ResourceInfo = {
 			type: 'source',
@@ -951,15 +886,10 @@ export class AgentSyncMCPServer {
 
 		if (fs.existsSync(baseDir)) {
 			try {
-				const files = fs
-					.readdirSync(baseDir)
-					.filter((f) => f.endsWith('.json'));
+				const files = fs.readdirSync(baseDir).filter((f) => f.endsWith('.json'));
 				for (const file of files) {
 					const filePath = path.join(baseDir, file);
-					const stats = this.getConversationStats(
-						filePath,
-						file.replace('.json', ''),
-					);
+					const stats = this.getConversationStats(filePath, file.replace('.json', ''));
 					resources.totalConversations++;
 					resources.totalSize += stats.sizeBytes;
 					resources.totalMessages += stats.messageCount;
@@ -1003,11 +933,11 @@ export class AgentSyncMCPServer {
 
 	private getTargetResources(
 		target: string,
-		projectPath: string,
-	): {content: Array<{type: 'text'; text: string}>} {
+		projectPath: string
+	): { content: Array<{ type: 'text'; text: string }> } {
 		if (!projectPath) {
 			return {
-				content: [{type: 'text', text: `projectPath required for target IDEs`}],
+				content: [{ type: 'text', text: `projectPath required for target IDEs` }],
 			};
 		}
 
@@ -1017,10 +947,7 @@ export class AgentSyncMCPServer {
 			jetbrains: '.jetbrains',
 			cursor: '.cursor',
 		};
-		const targetDir = path.join(
-			projectPath,
-			targetDirectories[target] || target,
-		);
+		const targetDir = path.join(projectPath, targetDirectories[target] || target);
 
 		let totalSize = 0;
 		let totalFiles = 0;
@@ -1030,14 +957,14 @@ export class AgentSyncMCPServer {
 		const walkDir = (dir: string) => {
 			if (!fs.existsSync(dir)) return;
 			try {
-				const entries = fs.readdirSync(dir, {withFileTypes: true});
+				const entries = fs.readdirSync(dir, { withFileTypes: true });
 				for (const entry of entries) {
 					const fullPath = path.join(dir, entry.name);
 					if (entry.isDirectory()) {
 						walkDir(fullPath);
 					} else {
 						totalFiles++;
-						const {size} = fs.statSync(fullPath);
+						const { size } = fs.statSync(fullPath);
 						totalSize += size;
 						if (
 							entry.name.endsWith('.json') &&
@@ -1045,10 +972,7 @@ export class AgentSyncMCPServer {
 							entry.name !== 'config.json'
 						) {
 							totalConversations++;
-							const stats = this.getConversationStats(
-								fullPath,
-								entry.name.replace('.json', ''),
-							);
+							const stats = this.getConversationStats(fullPath, entry.name.replace('.json', ''));
 							totalTokens += stats.estimatedTokens;
 						}
 					}
@@ -1078,7 +1002,7 @@ export class AgentSyncMCPServer {
 	}
 
 	private handleListProjects(arguments_: any) {
-		const {id} = arguments_;
+		const { id } = arguments_;
 
 		if (!this.isSourceAgent(id)) {
 			return {
@@ -1095,14 +1019,14 @@ export class AgentSyncMCPServer {
 		const baseDir = this.getSourceDir(id, undefined);
 		if (!baseDir)
 			return {
-				content: [{type: 'text', text: `Unknown agent: ${id}`}],
+				content: [{ type: 'text', text: `Unknown agent: ${id}` }],
 				isError: true,
 			};
 
 		const projectsDir = path.join(baseDir, 'projects');
 		if (!fs.existsSync(projectsDir)) {
 			return {
-				content: [{type: 'text', text: `No projects directory for ${id}`}],
+				content: [{ type: 'text', text: `No projects directory for ${id}` }],
 			};
 		}
 
@@ -1110,7 +1034,7 @@ export class AgentSyncMCPServer {
 			const projects = fs.readdirSync(projectsDir);
 			if (projects.length === 0) {
 				return {
-					content: [{type: 'text', text: `No projects found for ${id}`}],
+					content: [{ type: 'text', text: `No projects found for ${id}` }],
 				};
 			}
 
@@ -1120,14 +1044,12 @@ export class AgentSyncMCPServer {
 				let convCount = 0;
 				let totalTokens = 0;
 				if (fs.existsSync(sessionsPath)) {
-					const files = fs
-						.readdirSync(sessionsPath)
-						.filter((f) => f.endsWith('.json'));
+					const files = fs.readdirSync(sessionsPath).filter((f) => f.endsWith('.json'));
 					convCount = files.length;
 					for (const file of files) {
 						const stats = this.getConversationStats(
 							path.join(sessionsPath, file),
-							file.replace('.json', ''),
+							file.replace('.json', '')
 						);
 						totalTokens += stats.estimatedTokens;
 					}
@@ -1139,10 +1061,10 @@ export class AgentSyncMCPServer {
 				output += `└─\n`;
 			}
 
-			return {content: [{type: 'text', text: output}]};
+			return { content: [{ type: 'text', text: output }] };
 		} catch (error) {
 			return {
-				content: [{type: 'text', text: `Error: ${error}`}],
+				content: [{ type: 'text', text: `Error: ${error}` }],
 				isError: true,
 			};
 		}

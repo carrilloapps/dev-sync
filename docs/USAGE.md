@@ -4,26 +4,10 @@
 
 ### Sync Project
 
-Sync a project from one agent to another IDE:
+Sync a project from one agent to another IDE (no sync subcommand needed):
 
 ```bash
-agent-sync --from=claude-code --to=opencode --path=./my-project
-```
-
-### Short Flags
-
-Use shorthand flags for faster input:
-
-```bash
-agent-sync -f claude-code -t opencode -p ./my-project
-```
-
-### Overwrite Existing
-
-If target already exists, use `--overwrite`:
-
-```bash
-agent-sync -f copilot -t vscode -p ./project --overwrite
+ai-sync --from claude --to opencode --path ./my-project
 ```
 
 ## Command Options
@@ -35,114 +19,156 @@ agent-sync -f copilot -t vscode -p ./project --overwrite
 | `--path` | `-p` | Project path | Current directory |
 | `--overwrite` | `-o` | Overwrite existing config | `false` |
 | `--watch` | `-w` | Watch mode | `false` |
-| `--session` | | Show active sessions | `false` |
-| `--history` | | Show sync history | `false` |
-| `--listSources` | | List source agents | `false` |
-| `--listTargets` | | List target IDEs | `false` |
+| `--central` | | Central agent as source | |
+| `--global` | | Use global config | |
+| `--dry-run` | | Preview without applying | `false` |
+| `--profile` | | Profile name | |
+| `--json` | `-j` | JSON output | `false` |
+
+## Commands
+
+### init
+
+Initialize `.agents/agentsync.toml` in current directory:
+
+```bash
+ai-sync init
+ai-sync init --tools claude,opencode,copilot
+```
+
+### sync (direct)
+
+Sync with flags (no sync subcommand required):
+
+```bash
+ai-sync --from claude --to opencode --path ./my-project
+ai-sync -f claude -t opencode -p ./my-project
+ai-sync --dry-run
+ai-sync --central claude
+ai-sync --profile frontend
+ai-sync --tool vscode
+```
+
+### doctor
+
+Run diagnostics to check configuration:
+
+```bash
+ai-sync doctor
+ai-sync doctor --json
+```
+
+### clean
+
+Remove synced files:
+
+```bash
+ai-sync clean
+ai-sync clean --dry-run
+```
+
+### config
+
+Manage configuration:
+
+```bash
+ai-sync config ls
+ai-sync config ls mcp
+ai-sync config add tool claude
+ai-sync config add mcp github --mcp-config '{"command":"npx","args":["-y","@modelcontextprotocol/server-github"]}'
+ai-sync config rm tool opencode
+ai-sync config show
+```
+
+### list
+
+List supported tools and agents:
+
+```bash
+ai-sync list tools
+ai-sync list agents
+```
+
+## Visual Flows
+
+### Basic Sync Flow
+
+```mermaid
+flowchart LR
+    A[Claude Code] -->|ai-sync| B[OpenCode]
+    A -->|ai-sync| C[VS Code]
+```
+
+### Central Mode Flow
+
+```mermaid
+flowchart TB
+    C[Claude<br/>Central] -->|sync| O[OpenCode]
+    C -->|sync| V[VS Code]
+    C -->|sync| Cu[Cursor]
+    C -->|sync| J[JetBrains]
+    C -->|sync| W[WindSurf]
+```
+
+### Watch Mode Flow
+
+```mermaid
+flowchart LR
+    subgraph Watch["Watch Mode (--watch)"]
+        F[File Change] --> D[Detect]
+        D --> S[Sync]
+        S --> A[Apply]
+    end
+```
 
 ## Examples
 
-### Claude Code to OpenCode
+### Claude to OpenCode
 
 ```bash
-agent-sync --from=claude-code --to=opencode --path=~/projects/my-app
+ai-sync --from claude --to opencode --path ~/projects/my-app
 ```
 
 ### Copilot to VS Code
 
 ```bash
-agent-sync -f copilot -t vscode -p ~/projects/my-app
+ai-sync -f copilot -t vscode -p ~/projects/my-app
 ```
 
-### Gemini to JetBrains
+### Central Mode (Claude to All)
 
 ```bash
-agent-sync --from=gemini --to=jetbrains --path=~/projects/my-app
+ai-sync --central claude
 ```
 
-### Cursor to OpenCode
+### Profile-Based Sync
 
 ```bash
-agent-sync --from=cursor --to=opencode --path=~/projects/my-app
+ai-sync --profile development
 ```
 
-### WindSurf to Cursor
-
-```bash
-agent-sync --from=windsurf --to=cursor --path=~/projects/my-app
-```
-
-## Watch Mode
+### Watch Mode
 
 Watch for file changes and sync automatically:
 
 ```bash
-agent-sync --from=claude-code --to=opencode --path=./project --watch
+ai-sync --from claude --to opencode --path ./project --watch
 ```
-
-The watcher will:
-- Detect new files added to the project
-- Detect modifications to existing files
-- Detect deleted files
-- Automatically sync changes
 
 Press `Ctrl+C` to stop watching.
-
-## Information Commands
-
-### List Sources
-
-```bash
-agent-sync --listSources
-```
-
-Output:
-```
-Supported Source Agents:
-- claude-code    - Claude Code
-- copilot        - GitHub Copilot
-- gemini         - Google Gemini
-- cursor         - Cursor
-- windsurf       - WindSurf
-```
-
-### List Targets
-
-```bash
-agent-sync --listTargets
-```
-
-Output:
-```
-Supported Target IDEs:
-- opencode       - OpenCode
-- vscode         - Visual Studio Code
-- jetbrains      - JetBrains IDEs
-- cursor         - Cursor IDE
-```
-
-### Show History
-
-```bash
-agent-sync --history
-```
-
-### Show Sessions
-
-```bash
-agent-sync --session
-```
 
 ## Output Directories
 
 Each target creates its own configuration directory:
 
-| Target | Directory | Files |
+| Target | Directory | Notes |
 |--------|-----------|-------|
-| OpenCode | `.opencode/` | config.json, dependencies.json, source-map.json, sessions/ |
-| VS Code | `.vscode/` | workspace-state.json, file-mappings.json |
-| JetBrains | `.jetbrains/` | workspace/project-state.json, file-index.json |
-| Cursor | `.cursor/` | config.json, sessions/ |
+| Claude | `.claude/` | Skills, commands, MCP |
+| OpenCode | `.agents/` | Native reader |
+| VS Code | `.vscode/` | Settings |
+| JetBrains | `.jetbrains/` | Workspace state |
+| Cursor | `.cursor/` | Config, sessions |
+| WindSurf | `.windsurf/` | Skills, commands |
 
 ## Exit Codes
 
@@ -151,8 +177,26 @@ Each target creates its own configuration directory:
 
 ## Environment Variables
 
-None required. All configuration is done via CLI flags.
+| Variable | Description |
+|----------|-------------|
+| `AGENTSYNC_PROFILE` | Profile to use (e.g., `development`, `production`) |
 
-## Exit with Ctrl+C
+## TOML Configuration
 
-Press `Ctrl+C` to cancel any operation or stop watch mode.
+Create `.agents/agentsync.toml`:
+
+```toml
+tools = ["claude", "opencode", "copilot"]
+
+[mcp.github]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-github"]
+
+[profiles.development]
+tools = ["claude", "opencode"]
+mcp = ["github"]
+
+[profiles.production]
+tools = ["claude"]
+mcp = ["github", "postgres"]
+```

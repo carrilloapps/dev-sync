@@ -1,11 +1,11 @@
 # API Reference
 
-Agent Sync provides a programmatic API for integration with other tools and workflows.
+AI Sync provides a programmatic API for integration with other tools and workflows.
 
 ## Import
 
 ```typescript
-import { createAnalyzer, createExporter, syncProject, supportedSources, supportedTargets } from 'agent-sync';
+import { createAnalyzer, createExporter, syncProject, supportedSources, supportedTargets } from 'ai-sync-cli';
 ```
 
 ## Functions
@@ -15,9 +15,9 @@ import { createAnalyzer, createExporter, syncProject, supportedSources, supporte
 Create an analyzer for a specific agent.
 
 ```typescript
-import { createAnalyzer } from 'agent-sync';
+import { createAnalyzer } from 'ai-sync-cli';
 
-const analyzer = createAnalyzer('claude-code', '/path/to/project');
+const analyzer = createAnalyzer('claude', '/path/to/project');
 const result = await analyzer.analyze();
 
 console.log(result.projectContext.sourceFiles.length);
@@ -25,7 +25,7 @@ console.log(result.projectContext.dependencies);
 ```
 
 **Parameters:**
-- `agent` (string): Agent ID ('claude-code', 'copilot', 'gemini', 'cursor', 'windsurf')
+- `agent` (string): Agent ID ('claude', 'copilot', 'gemini', 'cursor', 'windsurf')
 - `projectPath` (string): Path to the project
 
 **Returns:** `Analyzer` object with `analyze()` method
@@ -35,7 +35,7 @@ console.log(result.projectContext.dependencies);
 Create an exporter for a specific IDE.
 
 ```typescript
-import { createExporter } from 'agent-sync';
+import { createExporter } from 'ai-sync-cli';
 
 const exporter = createExporter('opencode', '/path/to/project', {
   overwrite: false,
@@ -58,10 +58,10 @@ const result = await exporter.export(projectContext, sessionData);
 Synchronize a project directly.
 
 ```typescript
-import { syncProject } from 'agent-sync';
+import { syncProject } from 'ai-sync-cli';
 
 const result = await syncProject({
-  sourceAgent: 'claude-code',
+  sourceAgent: 'claude',
   targetAgent: 'opencode',
   projectPath: '/path/to/project',
   overwrite: false
@@ -110,7 +110,7 @@ interface AnalyzerResult {
   source: string;                      // Agent ID
   projectContext: ProjectContext;      // Project information
   sessionData?: SessionData;            // Session/conversation data
-  recommendations?: string[];          // Recommendations
+  recommendations?: string[];          // recommendations
 }
 ```
 
@@ -154,7 +154,7 @@ interface MigrationResult {
 ## Supported Agents
 
 ```typescript
-import { supportedSources } from 'agent-sync';
+import { supportedSources } from 'ai-sync-cli';
 
 for (const agent of supportedSources) {
   console.log(agent.id, agent.name);
@@ -162,16 +162,22 @@ for (const agent of supportedSources) {
 ```
 
 **Available Agents:**
-- `claude-code` - Claude Code
+- `claude` - Claude Code
 - `copilot` - GitHub Copilot
 - `gemini` - Google Gemini
 - `cursor` - Cursor
 - `windsurf` - WindSurf
+- `aider` - Aider
+- `continue` - Continue Dev
+- `replit` - Replit
+- `codex` - Codex
+- `amazonq` - Amazon Q
+- And 15+ more...
 
 ## Supported Targets
 
 ```typescript
-import { supportedTargets } from 'agent-sync';
+import { supportedTargets } from 'ai-sync-cli';
 
 for (const target of supportedTargets) {
   console.log(target.id, target.name);
@@ -183,6 +189,10 @@ for (const target of supportedTargets) {
 - `vscode` - Visual Studio Code
 - `jetbrains` - JetBrains IDEs
 - `cursor` - Cursor IDE
+- `zed` - Zed
+- `vim` - Vim/Neovim
+- `emacs` - Emacs
+- And 5+ more...
 
 ## SessionData
 
@@ -197,11 +207,11 @@ interface SessionData {
 ## Example: Full Sync Workflow
 
 ```typescript
-import { syncProject, createAnalyzer } from 'agent-sync';
+import { syncProject, createAnalyzer } from 'ai-sync-cli';
 
 async function syncWorkflow() {
   // Analyze first
-  const analyzer = createAnalyzer('claude-code', './my-project');
+  const analyzer = createAnalyzer('claude', './my-project');
   const analysis = await analyzer.analyze();
 
   console.log(`Found ${analysis.projectContext.sourceFiles.length} files`);
@@ -210,7 +220,7 @@ async function syncWorkflow() {
   // Sync to multiple targets
   for (const target of ['opencode', 'vscode', 'cursor']) {
     const result = await syncProject({
-      sourceAgent: 'claude-code',
+      sourceAgent: 'claude',
       targetAgent: target,
       projectPath: './my-project'
     });
@@ -225,10 +235,10 @@ syncWorkflow().catch(console.error);
 ## Example: Export Specific Conversation
 
 ```typescript
-import { createAnalyzer, createExporter } from 'agent-sync';
+import { createAnalyzer, createExporter } from 'ai-sync-cli';
 
 async function exportConversation() {
-  const analyzer = createAnalyzer('claude-code', './my-project');
+  const analyzer = createAnalyzer('claude', './my-project');
   const analysis = await analyzer.analyze();
 
   // Find specific conversation
@@ -259,11 +269,11 @@ exportConversation().catch(console.error);
 ## Error Handling
 
 ```typescript
-import { syncProject } from 'agent-sync';
+import { syncProject } from 'ai-sync-cli';
 
 try {
   const result = await syncProject({
-    sourceAgent: 'claude-code',
+    sourceAgent: 'claude',
     targetAgent: 'opencode',
     projectPath: './my-project'
   });
