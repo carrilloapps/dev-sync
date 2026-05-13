@@ -55,55 +55,89 @@ pnpm add -g ai-sync-cli
 npx ai-sync --from claude --to vscode --path ./project
 ```
 
-## Usage Examples
+## Sync Modes
 
-### Basic Sync
+AI Sync offers multiple ways to sync depending on your workflow:
+
+### 1. Direct Sync (Point to Point)
+
+Sync from one specific agent to one specific IDE:
 
 ```bash
-# Claude → VS Code (flags work directly, no sync subcommand)
+# Basic syntax
+ai-sync --from <agent> --to <ide> --path ./project
+
+# Examples
 ai-sync --from claude --to vscode --path ./my-app
-
-# Short flags
-ai-sync -f claude -t vscode -p ./my-app
-
-# Preview what will sync (dry run)
-ai-sync --dry-run
+ai-sync --from copilot --to jetbrains --path ./backend
+ai-sync --from gemini --to cursor --path ./ai-project
+ai-sync --from windsurf --to opencode --path ./workspace
 ```
 
-### Real-time Watch Mode
+### 2. Central Mode (One Source, Many Targets)
+
+Use ANY agent as the central source. AI Sync detects all other agents/IDEs in the project and syncs from the central one to all of them:
 
 ```bash
-# Watch for changes and auto-sync
-ai-sync --from claude --to opencode --path ./project --watch
+# Use Claude as central source (syncs to ALL detected tools)
+ai-sync --central claude
+
+# Use Copilot as central source
+ai-sync --central copilot
+
+# Use WindSurf as central source
+ai-sync --central windsurf
+
+# Works with ANY supported agent:
+# claude, copilot, gemini, cursor, windsurf, aider, continue,
+# amazonq, codex, devin, replit, and 15+ more
 ```
 
-### Central Mode (One Source, All Targets)
-
-Use Claude as central source, sync to ALL detected tools:
+How Central Mode works:
 
 ```
     ┌─────────────┐
-    │   Claude    │  (Central Source)
+    │   (any)     │  ← You choose: claude, copilot, gemini, etc.
+    │   Agent     │  ← This becomes the central source
     └──────┬──────┘
            │
     ┌──────┼──────┬─────────┬─────────┐
     ▼      ▼      ▼         ▼         ▼
-OpenCode  VSCode  Cursor  JetBrains  WindSurf
+ OpenCode  VSCode  Cursor  JetBrains  WindSurf
+    │      │       │         │         │
+    └──────┴───────┴─────────┴─────────┘
+                    │
+             All synced from central source
 ```
 
-```bash
-# Use Claude as central source, sync to ALL detected tools
-ai-sync --central claude
-```
+### 3. Global Mode (Your Personal Library)
 
-### Global Mode (Your Personal Library)
+Sync from a global configuration (`~/.agents/`) to all projects:
 
 ```bash
-# Sync from your global skills/commands library
+# Sync from global config to project
 ai-sync --global
 ```
 
-### MCP Server
+### 4. Watch Mode (Real-time Sync)
+
+Watch for file changes and auto-sync:
+
+```bash
+# Watch and sync automatically
+ai-sync --from claude --to vscode --path ./project --watch
+```
+
+### 5. Dry Run (Preview)
+
+Preview what will be synced without making changes:
+
+```bash
+# See what would happen
+ai-sync --from claude --to vscode --path ./project --dry-run
+```
+
+## MCP Server
 
 The MCP server is included in the same package:
 
@@ -122,42 +156,76 @@ npx ai-sync-mcp
 }
 ```
 
-### List Available Tools
+## Common Workflows
+
+### Token Limit Workflow
 
 ```bash
-# Show all supported agents
-ai-sync list agents
+# 1. You're working with Claude, close to token limit
+ai-sync --from claude --to vscode --path ./my-project
 
-# Show all supported IDEs
-ai-sync list tools
+# 2. Open VS Code, continue from where Claude left off
 ```
 
-### Diagnostics
+### Team Collaboration
 
 ```bash
-# Check configuration and connectivity
+# Use Copilot as central source (team standard)
+ai-sync --central copilot
+
+# Everyone syncs from Copilot's context
+```
+
+### Personal Productivity
+
+```bash
+# Set up your personal skills once
+mkdir -p ~/.agents/skills
+# Add your custom prompts, commands, etc.
+
+# Sync to any project
+ai-sync --global
+```
+
+## Command Options
+
+| Flag | Short | Description | Default |
+|------|-------|-------------|---------|
+| `--from` | `-f` | Source agent | Required for direct sync |
+| `--to` | `-t` | Target IDE | Required for direct sync |
+| `--path` | `-p` | Project path | Current directory |
+| `--central` | | Agent ID as central source | Syncs to all detected |
+| `--global` | | Use global config | Syncs from ~/.agents/ |
+| `--watch` | `-w` | Watch mode | false |
+| `--dry-run` | | Preview only | false |
+| `--overwrite` | `-o` | Overwrite existing | false |
+| `--profile` | | Profile name | |
+| `--json` | `-j` | JSON output | false |
+
+## Other Commands
+
+```bash
+# Initialize config in project
+ai-sync init
+ai-sync init --tools claude,opencode,copilot
+
+# Check configuration
 ai-sync doctor
-
-# JSON output for automation
 ai-sync doctor --json
-```
 
-## Workflow Example
+# Clean synced files
+ai-sync clean
+ai-sync clean --dry-run
 
-```
-1. User working with Claude Code
-         │
-         ▼
-2. Hits token limit
-         │
-         ▼
-3. Run: ai-sync --from claude --to vscode
-         │
-         ▼
-4. VS Code has full conversation history
-         │
-         ▼
-5. Continue where Claude left off ✓
+# Manage configuration
+ai-sync config ls
+ai-sync config show
+ai-sync config add tool claude
+ai-sync config rm tool opencode
+
+# List supported tools
+ai-sync list agents   # Show all agents
+ai-sync list tools    # Show all IDEs
 ```
 
 ## Features
@@ -166,7 +234,7 @@ ai-sync doctor --json
 - **All IDEs** - Export to VS Code, JetBrains, Zed, Vim, Emacs, and more
 - **Conversations Travel** - Your session context follows you, not just files
 - **Real-time Watch** - Auto-sync as you code
-- **Central Mode** - One agent as source, all others sync automatically
+- **Central Mode** - Any agent can be the source for all others
 - **MCP Built-in** - Full Model Context Protocol server for AI integration
 
 ## Configuration
@@ -190,42 +258,7 @@ tools = ["claude", "cursor"]
 tools = ["claude", "jetbrains"]
 ```
 
-## MCP Tools
-
-| Tool | Description |
-|------|-------------|
-| `list_agents` | List all supported agents and IDEs |
-| `sync_project` | Sync a project between agents |
-| `list_conversations` | List all conversations with stats |
-| `export_conversation` | Export a specific conversation |
-| `update_conversation` | Add messages to a conversation |
-| `analyze_project` | Get project structure and context |
-| `get_project_state` | Get current sync state |
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                     AI Sync CLI                         │
-│                   (ai-sync command)                     │
-└─────────────────────┬───────────────────────────────┘
-                      │
-        ┌─────────────┼─────────────┐
-        ▼             ▼             ▼
-   ┌─────────┐   ┌─────────┐   ┌─────────┐
-   │ Analyzers│   │  Sync  │   │  MCP    │
-   │         │   │ Engine │   │ Server  │
-   └────┬────┘   └────┬────┘   └────┬────┘
-        │             │             │
-        ▼             ▼             ▼
-   ┌─────────┐   ┌─────────┐   ┌─────────┐
-   │ Claude  │   │ VS Code │   │  IDEs   │
-   │ Copilot │   │ Cursor  │   │  via    │
-   │ Gemini  │   │ JetBrains│  │  stdio  │
-   └─────────┘   └─────────┘   └─────────┘
-```
-
-## Supported Agents
+## Supported Agents (--from or --central)
 
 | Agent | ID |
 |-------|-----|
@@ -240,9 +273,20 @@ tools = ["claude", "jetbrains"]
 | Codex | `codex` |
 | Devin | `devin` |
 | Replit | `replit` |
-| And 15+ more... | |
+| Trae | `trae` |
+| CodePal | `codepal` |
+| Kiro | `kiro` |
+| OpenHands | `openhands` |
+| Junie | `junie` |
+| Crush | `crush` |
+| KiloCode | `kilocode` |
+| Qwen | `qwen` |
+| Amp | `amp` |
+| Goose | `goose` |
+| RooCode | `roocode` |
+| Cline | `cline` |
 
-## Supported IDEs
+## Supported IDEs (--to)
 
 | IDE | Directory |
 |-----|----------|
@@ -256,6 +300,10 @@ tools = ["claude", "jetbrains"]
 | WindSurf | `.windsurf/` |
 | Lapce | `.lapce/` |
 | Nova | `.nova/` |
+| Sublime | `.sublime/` |
+| Atom | `.atom/` |
+| Onivim | `.onivim/` |
+| Tabby | `.tabby/` |
 
 ## Documentation
 
