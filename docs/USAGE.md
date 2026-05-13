@@ -36,7 +36,7 @@ ai-sync init
 ai-sync init --tools claude,opencode,copilot
 ```
 
-### sync (direct)
+### Sync (direct)
 
 Sync with flags (no sync subcommand required):
 
@@ -93,32 +93,33 @@ ai-sync list agents
 
 ### Basic Sync Flow
 
-```mermaid
-flowchart LR
-    A[Claude Code] -->|ai-sync| B[OpenCode]
-    A -->|ai-sync| C[VS Code]
+```
+Claude Code ──────► OpenCode
+      │
+      └───────────► VS Code
 ```
 
 ### Central Mode Flow
 
-```mermaid
-flowchart TB
-    C[Claude<br/>Central] -->|sync| O[OpenCode]
-    C -->|sync| V[VS Code]
-    C -->|sync| Cu[Cursor]
-    C -->|sync| J[JetBrains]
-    C -->|sync| W[WindSurf]
+```
+         ┌─────────────┐
+         │   Claude    │  (Central Source)
+         └──────┬──────┘
+                │
+    ┌──────────┼──────────┐
+    ▼          ▼          ▼
+ OpenCode    VS Code     Cursor
+    ▼          ▼          ▼
+ JetBrains  WindSurf     (all synced)
 ```
 
 ### Watch Mode Flow
 
-```mermaid
-flowchart LR
-    subgraph Watch["Watch Mode (--watch)"]
-        F[File Change] --> D[Detect]
-        D --> S[Sync]
-        S --> A[Apply]
-    end
+```
+File Change ──► Detect ──► Sync ──► Apply
+     ▲                              │
+     └──────────────────────────────┘
+           (continuous loop)
 ```
 
 ## Examples

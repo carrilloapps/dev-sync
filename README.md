@@ -29,13 +29,14 @@ ai-sync --from claude --to vscode --path ./my-project
 
 ## How It Works
 
-```mermaid
-flowchart LR
-    A[Claude Code] -->|ai-sync| B[VS Code]
-    B -->|Continue| C[Full Context]
-    A -->|ai-sync| D[Cursor]
-    A -->|ai-sync| E[JetBrains]
-    A -->|ai-sync| F[WindSurf]
+```
+Claude Code ──────► VS Code
+     │                   │
+     └───── AI Sync ─────┘
+              │
+     ┌───────┴───────┐
+     ▼               ▼
+   Cursor       JetBrains
 ```
 
 ## Installation
@@ -78,13 +79,16 @@ ai-sync --from claude --to opencode --path ./project --watch
 
 ### Central Mode (One Source, All Targets)
 
-```mermaid
-flowchart TB
-    C[Claude<br/>Central] -->|sync to all| O[OpenCode]
-    C -->|sync to all| V[VS Code]
-    C -->|sync to all| Cu[Cursor]
-    C -->|sync to all| J[JetBrains]
-    C -->|sync to all| W[WindSurf]
+Use Claude as central source, sync to ALL detected tools:
+
+```
+    ┌─────────────┐
+    │   Claude    │  (Central Source)
+    └──────┬──────┘
+           │
+    ┌──────┼──────┬─────────┬─────────┐
+    ▼      ▼      ▼         ▼         ▼
+OpenCode  VSCode  Cursor  JetBrains  WindSurf
 ```
 
 ```bash
@@ -140,29 +144,30 @@ ai-sync doctor --json
 
 ## Workflow Example
 
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant CC as Claude Code
-    participant AS as AI Sync
-    participant VS as VS Code
-
-    Note over U,CC: User working with Claude Code
-    CC->>U: Hits token limit
-    U->>AS: ai-sync --from claude --to vscode
-    AS->>VS: Syncs conversation & context
-    Note over VS: Full history available
-    VS->>U: Continue where Claude left off
+```
+1. User working with Claude Code
+         │
+         ▼
+2. Hits token limit
+         │
+         ▼
+3. Run: ai-sync --from claude --to vscode
+         │
+         ▼
+4. VS Code has full conversation history
+         │
+         ▼
+5. Continue where Claude left off ✓
 ```
 
 ## Features
 
-- **🔄 Sync Anywhere** - Move between Claude, Copilot, Gemini, Cursor, WindSurf, and 20+ agents
-- **📁 All IDEs** - Export to VS Code, JetBrains, Zed, Vim, Emacs, and more
-- **💾 Conversations Travel** - Your session context follows you, not just files
-- **⏰ Real-time Watch** - Auto-sync as you code
-- **🧠 Central Mode** - One agent as source, all others sync automatically
-- **🔌 MCP Built-in** - Full Model Context Protocol server for AI integration
+- **Sync Anywhere** - Move between Claude, Copilot, Gemini, Cursor, WindSurf, and 20+ agents
+- **All IDEs** - Export to VS Code, JetBrains, Zed, Vim, Emacs, and more
+- **Conversations Travel** - Your session context follows you, not just files
+- **Real-time Watch** - Auto-sync as you code
+- **Central Mode** - One agent as source, all others sync automatically
+- **MCP Built-in** - Full Model Context Protocol server for AI integration
 
 ## Configuration
 
@@ -197,33 +202,27 @@ tools = ["claude", "jetbrains"]
 | `analyze_project` | Get project structure and context |
 | `get_project_state` | Get current sync state |
 
-## Architecture Overview
+## Architecture
 
-```mermaid
-flowchart TB
-    subgraph CLI
-        C[ai-sync CLI]
-    end
-
-    subgraph MCP
-        M[ai-sync-mcp<br/>Server]
-    end
-
-    subgraph Agents
-        CC[Claude Code]
-        CO[Copilot]
-        GE[Gemini]
-    end
-
-    subgraph IDEs
-        VS[VS Code]
-        JT[JetBrains]
-        CD[Cursor]
-    end
-
-    C -->|sync| Agents
-    M -->|MCP protocol| IDEs
-    Agents -->|read/write| IDEs
+```
+┌─────────────────────────────────────────────────────────┐
+│                     AI Sync CLI                         │
+│                   (ai-sync command)                     │
+└─────────────────────┬───────────────────────────────┘
+                      │
+        ┌─────────────┼─────────────┐
+        ▼             ▼             ▼
+   ┌─────────┐   ┌─────────┐   ┌─────────┐
+   │ Analyzers│   │  Sync  │   │  MCP    │
+   │         │   │ Engine │   │ Server  │
+   └────┬────┘   └────┬────┘   └────┬────┘
+        │             │             │
+        ▼             ▼             ▼
+   ┌─────────┐   ┌─────────┐   ┌─────────┐
+   │ Claude  │   │ VS Code │   │  IDEs   │
+   │ Copilot │   │ Cursor  │   │  via    │
+   │ Gemini  │   │ JetBrains│  │  stdio  │
+   └─────────┘   └─────────┘   └─────────┘
 ```
 
 ## Supported Agents

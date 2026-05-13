@@ -2,24 +2,21 @@
 
 AI Sync includes a full [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server for integration with AI clients and IDEs.
 
-```mermaid
-flowchart TB
-    subgraph MCP["AI Sync MCP Server"]
-        L["list_agents"]
-        S["sync_project"]
-        LC["list_conversations"]
-        EC["export_conversation"]
-        AP["analyze_project"]
-    end
-
-    subgraph Clients["MCP Clients"]
-        CC[Claude Code]
-        CW[Cursor WindSurf]
-        VS[VS Code]
-        JB[JetBrains]
-    end
-
-    Clients -->|stdin/stdout| MCP
+```
+┌─────────────────────────────────────────────────────────┐
+│              AI Sync MCP Server                        │
+│                                                         │
+│   list_agents  sync_project  list_conversations       │
+│   export_conversation  update_conversation              │
+│   analyze_project  get_project_state                   │
+└───────────────────────┬─────────────────────────────────┘
+                        │ stdio (stdin/stdout)
+        ┌───────────────┼───────────────┐
+        ▼               ▼               ▼
+   ┌─────────┐   ┌───────────┐   ┌─────────┐
+   │ Claude  │   │   VS Code │   │ Cursor  │
+   │   Code  │   │   / Any   │   │WindSurf │
+   └─────────┘   └───────────┘   └─────────┘
 ```
 
 ## Quick Start
@@ -367,17 +364,17 @@ WindSurf supports MCP servers:
 
 ## MCP Tools Reference
 
-```mermaid
-flowchart LR
-    subgraph Tools["Available MCP Tools"]
-        L1["list_agents"]
-        L2["sync_project"]
-        L3["list_conversations"]
-        L4["export_conversation"]
-        L5["update_conversation"]
-        L6["analyze_project"]
-        L7["get_project_state"]
-    end
+```
+Available MCP Tools:
+─────────────────────────────────────────────────
+  list_agents          - List all agents/IDEs
+  sync_project         - Sync project between agents
+  list_conversations   - List conversations with stats
+  export_conversation  - Export a specific conversation
+  update_conversation  - Add messages to conversation
+  analyze_project      - Get project structure/context
+  get_project_state   - Get current sync state
+─────────────────────────────────────────────────
 ```
 
 ### list_agents
